@@ -6,7 +6,7 @@ include "../model/dbconnection.php";
 
         $srcode = $_GET['studentSRCode'];
 
-        $query = "SELECT SBI.sr_code, SBI.lastname, SBI.firstname, SBI.email, SBI.contact, YL.year_level, S.status, SS.section, SS.course, SM.semester, 
+        $query = "SELECT SBI.sr_code, SBI.lastname, SBI.firstname, YL.year_level, S.status, SS.section, SS.course, SM.semester, 
         COALESCE((SELECT major FROM student_major WHERE sr_code = '$srcode'), 0) AS major 
         FROM student_basic_info SBI 
         INNER JOIN student_status SS 

@@ -98,6 +98,56 @@ if(isset($_POST['submitMajor'])){
 
 }
 
+//ADD STUDENT
+if(isset($_POST['submit_student'])){
+    $srcode = $_POST['srcode'];
+    $lastname = $_POST['lastname'];
+    $firstname = $_POST['firstname'];
+    $middlename = $_POST['middlename'];
+    $year = $_POST['year'];
+    $course = $_POST['course'];
+    $sem = $_POST['sem'];
+
+    $lastN = strtoupper($lastname);
+
+    $query = "INSERT INTO student_basic_info (sr_code, lastname, firstname, middlename) VALUES ('$srcode','$lastname','$firstname','$middlename')";
+    $query_run = mysqli_query($con, $query);
+
+    if($query_run){
+        $query2 = "INSERT INTO student_status (sr_code, year_level, status_id, section, course, sem_id) VALUES ('$srcode', '$year', '1', '0', '$course', '$sem')";
+        $query_run2 = mysqli_query($con, $query2);
+        if($query_run2){
+            $query3 = "INSERT INTO studentlogin (srcode, password, usertype) VALUES ('$srcode', '$lastN', 'student')";
+            $query_run3 = mysqli_query($con, $query3);
+            if($query_run3){
+                $_SESSION['status'] = "Student added successfully!";
+                $_SESSION['status_code'] = "success";
+                header("Location: ../view/adminModule/maintenance.php");
+                exit();
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // SUBMIT EVALUATION

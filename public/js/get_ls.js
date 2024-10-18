@@ -14,6 +14,7 @@ $(document).ready(function () {
   $("#course").text(course);
   $("#year").text(year);
   $("#semester").text(semester);
+  $('#usermajor').text(getMajor);
 
   if (year == "FIRST" || year == "SECOND") {
     $("#maxunit").text("23");
@@ -48,7 +49,6 @@ $(document).ready(function () {
     dataType: 'json',
     success: function(data){
       localStorage.setItem('GetSemester', JSON.stringify(data));
-      console.log(data);
     }
   })
   var getSem = JSON.parse(localStorage.getItem("GetSemester"));
@@ -215,7 +215,7 @@ $(document).ready(function () {
                     icon: "success",
                     title: "You are now enroll in this subject",
                     toast: true,
-                    timer: 2000,
+                    timer: 1000,
                     timerProgressBar: true,
                     showConfirmButton: false,
                     position: "top-right",

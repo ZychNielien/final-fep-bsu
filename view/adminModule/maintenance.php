@@ -7,13 +7,13 @@ include "components/navBar.php"
 <head>
     <link rel="stylesheet" href="../../fontawesome/css/all.min.css">
 
-    <!-- SWEETALERT2 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!--  -->
+    <!-- DATATABLES -->
+  <link rel="stylesheet" href="../../public/DataTables/datatables.min.css">
+  <script src="../../public/DataTables/datatables.min.js"></script>
+  <!--  -->
 
     <!-- TITLE WEB PAGE -->
-    <title>Peer to Peer Faculty Evaluation</title>
+    <title>Maintenance Table</title>
 
     <!-- ALL STYLES, CSS AND SCRIPTS -->
     <link rel="stylesheet" href="../../public/css/style.css">
@@ -29,6 +29,10 @@ include "components/navBar.php"
             font-size: 30px;
         }
     </style>
+    <!-- datatables -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!--  -->
 </head>
 
 <!-- CONTENT CONTAINER -->
@@ -41,12 +45,12 @@ include "components/navBar.php"
   <li class="nav-item" role="presentation">
     <button class="nav-link" id="AssignSub-tab" data-bs-toggle="tab" data-bs-target="#AssignSub" type="button" role="tab" aria-controls="AssignSub" aria-selected="true"><i class="fa-solid fa-book-open-reader"></i> Assign Subject</button>
   </li>
-  <li class="nav-item" role="presentation">
+  <!-- <li class="nav-item" role="presentation">
     <button class="nav-link" id="AddSub-tab" data-bs-toggle="tab" data-bs-target="#AddSub" type="button" role="tab" aria-controls="AddSub" aria-selected="false"><i class="fa-solid fa-book"></i> Add Subject</button>
   </li>
   <li class="nav-item" role="presentation">
     <button class="nav-link" id="AddSec-tab" data-bs-toggle="tab" data-bs-target="#AddSec" type="button" role="tab" aria-controls="AddSec" aria-selected="false"><i class="fa-solid fa-users-between-lines"></i> Add Section</button>
-  </li>
+  </li> -->
 </ul>
 <!-- END TAB -->
 
@@ -55,12 +59,215 @@ include "components/navBar.php"
 
 <!--  -->
   <div class="tab-pane fade show active" id="AddStudent" role="tabpanel" aria-labelledby="AddStudent-tab">
+    <div class="container p-2">
+      <div class="mt-3 d-flex justify-content-between">
+        <h3 class=""><i class="fa-solid fa-book-open-reader"></i> Add Student</h3>
+          <div>
+              <button class="btn btn-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#addstudent">
+              <i class="fa-solid fa-plus"></i>  Add Student
+              </button>
+          </div>
+      </div>
+
+  <!-- START TABLE -->
+  <table id="student_table" class="table table-striped table-bordered text-center mt-5" style="font-family: monospace">
+            <thead >
+                <tr class="text-dark">
+                    <th class="bg-danger">Sr-code</th>
+                    <th class="bg-danger">Full Name</th>
+                    <th class="bg-danger">Year Level</th>
+                    <th class="bg-danger">Course</th>
+                    <th class="bg-danger">Semester</th>
+                    <th class="bg-danger">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+              <?php
+                $query_st = "SELECT SB.sr_code, SB.lastname, SB.firstname, SB.middlename, YL.year_level, SS.course, SM.semester
+                              FROM student_basic_info SB 
+                              INNER JOIN student_status SS 
+                              ON SB.sr_code = SS.sr_code 
+                              INNER JOIN semester SM 
+                              ON SS.sem_id = SM.sem_id 
+                              INNER JOIN year_level YL 
+                              ON SS.year_level = YL.year_id";
+                $query_run_st = mysqli_query($con, $query_st);
+
+                if (mysqli_num_rows($query_run_st) > 0){
+                  while($row = mysqli_fetch_assoc($query_run_st)){
+                ?>
+                    <tr>
+                      <td><?php echo $row['sr_code'] ?></td>
+                      <td><?php echo $row['lastname'] ?>, <?php echo $row['firstname'] ?> <?php echo $row['middlename'] ?></td>
+                      <td><?php echo $row['year_level'] ?></td>
+                      <td><?php echo $row['course'] ?></td>
+                      <td><?php echo $row['semester'] ?></td>
+                      <td>
+                        <button type="button" id="<?php echo $row['sr_code'] ?>" class="btn btn-primary edit-st" data-bs-toggle="modal" data-bs-target="#editstudent">Edit</button>
+                        <button type="button" id="<?php echo $row['sr_code'] ?>" class="btn btn-danger delete-st">Delete</button>
+                      </td>
+                    </tr>
+                <?php
+                  }
+                } else {
+                  ?>
+                  <tr>
+                    <td colspan="6">No Student data</td>
+                  </tr>
+                  <?php
+                }
+                ?>
+            </tbody>
+          </table>
+  <!-- END TABLE -->
+
+<!-- START ADD STUDENT MODAL -->
+  <div class="modal fade" id="addstudent" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-danger">
+          <h5 class="modal-title text-light" id="student_modalLabel">ADD STUDENT</h5>
+          <button type="button" class="btn-close bg-light" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="../../controller/controller.php" method="POST">
+            <div class="row mb-3">
+              <div class="col-4">
+                <label for="srcode" class="form-label fw-bold">SR-CODE: </label>
+                <input type="text" name="srcode" id="srcode" class="form-control" placeholder="Enter Sr-code">
+              </div>
+              <div class="col">
+                <label for="lastname" class="form-label fw-bold">Last Name:</label>
+                <input type="text" name="lastname" id="lastname" class="form-control" placeholder="Enter last name">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col">
+                <label for="firstname" class="form-label fw-bold">First Name:</label>
+                <input type="text" name="firstname" id="firstname" class="form-control" placeholder="Enter first name">
+              </div>
+              <div class="col">
+                <label for="middlename" class="form-label fw-bold">Middle Name:</label>
+                <input type="text" name="middlename" id="middlename" class="form-control" placeholder="Enter middel name">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-3">
+                <label for="year" class="form-label fw-bold">Year level:</label>
+                <select name="year" id="year" class="form-select">
+                  <option value="selected" selected disabled>---Select Year level---</option>
+                  <option value="1">FIRST</option>
+                  <option value="2">SECOND</option>
+                  <option value="3">THIRD</option>
+                  <option value="4">FOUR</option>
+                </select>
+              </div>
+              <div class="col">
+                <label for="course" class="form-label fw-bold">Course:</label>
+                <select name="course" id="course" class="form-select">
+                  <option value="selected" selected disabled>---Select Course---</option>
+                  <option value="Bachelor of Science in Information Technology">Bachelor of Science in Information Technology</option>
+                  <option value="Bachelor of Science in Computer Science">Bachelor of Science in Computer Science</option>
+                </select>
+              </div>
+              <div class="col-3">
+                <label for="sem" class="form-label fw-bold">Semester:</label>
+                <select name="sem" id="sem" class="form-select">
+                  <option value="selected" selected disabled>---Select Semester---</option>
+                  <option value="1">FIRST</option>
+                  <option value="2">SECOND</option>
+                </select>
+              </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer d-flex justify-content-between">
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa-regular fa-circle-xmark"></i> Close</button>
+          <input type="submit" name="submit_student" id="submit_student" class="btn btn-success" value="Submit">
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- END ADD STUDENT MODAL -->
+
+<!-- START EDIT STUDENT MODAL -->
+<div class="modal fade" id="editstudent" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-danger">
+          <h5 class="modal-title text-light" id="editstudent_modalLabel">EDIT STUDENT INFORMATION</h5>
+          <button type="button" class="btn-close bg-light" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="../../controller/updateSRCst.php" method="POST">
+            <div class="row mb-3">
+              <div class="col-4">
+                <label for="srcode2" class="form-label fw-bold">SR-CODE: </label>
+                <input type="text" name="srcode" id="srcode2" class="form-control" placeholder="Enter Sr-code">
+              </div>
+              <div class="col">
+                <label for="lastname2" class="form-label fw-bold">Last Name:</label>
+                <input type="text" name="lastname" id="lastname2" class="form-control" placeholder="Enter last name">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col">
+                <label for="firstname2" class="form-label fw-bold">First Name:</label>
+                <input type="text" name="firstname" id="firstname2" class="form-control" placeholder="Enter first name">
+              </div>
+              <div class="col">
+                <label for="middlename2" class="form-label fw-bold">Middle Name:</label>
+                <input type="text" name="middlename" id="middlename2" class="form-control" placeholder="Enter middel name">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-3">
+                <label for="year2" class="form-label fw-bold">Year level:</label>
+                <select name="year" id="year2" class="form-select">
+                  <option value="selected" disabled>---Select Year level---</option>
+                  <option value="1">FIRST</option>
+                  <option value="2">SECOND</option>
+                  <option value="3">THIRD</option>
+                  <option value="4">FOUR</option>
+                </select>
+              </div>
+              <div class="col">
+                <label for="course2" class="form-label fw-bold">Course:</label>
+                <select name="course" id="course2" class="form-select">
+                  <option value="selected" disabled>---Select Course---</option>
+                  <option value="Bachelor of Science in Information Technology">Bachelor of Science in Information Technology</option>
+                  <option value="Bachelor of Science in Computer Science">Bachelor of Science in Computer Science</option>
+                </select>
+              </div>
+              <div class="col-3">
+                <label for="sem2" class="form-label fw-bold">Semester:</label>
+                <select name="sem" id="sem2" class="form-select">
+                  <option value="selected" disabled>---Select Semester---</option>
+                  <option value="1">FIRST</option>
+                  <option value="2">SECOND</option>
+                </select>
+              </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer d-flex justify-content-between">
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa-regular fa-circle-xmark"></i> Close</button>
+          <input type="submit" name="update_student" id="update_student" class="btn btn-success" value="Update">
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- END EDIT STUDENT MODAL -->
+
+    </div>
   </div>
 <!--  -->
 
 <!-- START ASSIGN SUB -->
   <div class="tab-pane fade" id="AssignSub" role="tabpanel" aria-labelledby="AssignSub-tab">
-        <div class="container p2">
+        <div class="container p-2">
             <div class="mt-3 d-flex justify-content-between">
                 <h3 class=""><i class="fa-solid fa-book-open-reader"></i> Assign Subject</h3>
                 <div>
@@ -73,55 +280,55 @@ include "components/navBar.php"
         <table class="table table-striped table-bordered text-center mt-5" style="font-family: monospace">
             <thead >
                 <tr class="text-dark">
-                    <th class="text-dark">Code</th>
-                    <th class="text-dark">Description</th>
-                    <th class="text-dark">Unit</th>
-                    <th class="text-dark">Section</th>
-                    <th class="text-dark">Instructor</th>
-                    <th class="text-dark">Schedule</th>
-                    <th class="text-dark">Action</th>
+                    <th class="bg-danger">Code</th>
+                    <th class="bg-danger">Description</th>
+                    <th class="bg-danger">Unit</th>
+                    <th class="bg-danger">Section</th>
+                    <th class="bg-danger">Instructor</th>
+                    <th class="bg-danger">Schedule</th>
+                    <!-- <th class="text-dark">Action</th> -->
                 </tr>
             </thead>
             <tbody>
               <?php
               $query = "SELECT 
-                              E.id,
-                              S.subject_code, 
-                              E.subject_id, 
-                              S.unit, 
-                              E.section_id, 
-                              I.last_name, 
-                              I.first_name, 
-                              I.faculty_id, 
-                              D.days, 
-                              TS.time AS startTime, 
-                              TE.time AS endTime, 
-                              COALESCE(D2.days, 'N/A') AS Day2, 
-                              COALESCE(TS2.time, 'N/A') AS startTime2, 
-                              COALESCE(TE2.time, 'N/A') AS endTime2,
-                              E.eval_status
-                          FROM 
-                              enrolled_subject E 
-                          INNER JOIN 
-                              subject S ON E.subject_id = S.subject 
-                          INNER JOIN 
-                              instructor I ON E.faculty_id = I.faculty_id 
-                          LEFT JOIN 
-                              enrolled_student ES ON S.subject_id = ES.subject_id 
-                          LEFT JOIN 
-                              assigned_subject A ON ES.subject_id = A.subject_id AND E.faculty_id = A.faculty_id AND ES.section_id = A.section_id
-                          INNER JOIN 
-                              days D ON A.day_id = D.day_id 
-                          INNER JOIN 
-                              time TS ON A.S_time_id = TS.time_id 
-                          INNER JOIN 
-                              time TE ON A.E_time_id = TE.time_id 
-                          LEFT JOIN 
-                              days D2 ON A.day_id_2 = D2.day_id 
-                          LEFT JOIN 
-                              time TS2 ON A.S_time_id_2 = TS2.time_id 
-                          LEFT JOIN 
-                              time TE2 ON A.E_time_id_2 = TE2.time_id";
+                        A.id, 
+                        S.subject_code, 
+                        S.subject, 
+                        S.unit, 
+                        SC.section, 
+                        I.last_name,
+                        A.slot AS max_slot, 
+                        I.first_name,
+                        D.days, 
+                        TS.time AS startTime, 
+                        TE.time AS endTime, 
+                        COALESCE(D2.days, 'N/A') AS Day2, 
+                        COALESCE(TS2.time, 'N/A') AS startTime2, 
+                        COALESCE(TE2.time, 'N/A') AS endTime2
+                    FROM assigned_subject A 
+                    INNER JOIN subject S 
+                        ON A.subject_id = S.subject_id 
+                    INNER JOIN instructor I 
+                        ON A.faculty_id = I.faculty_id 
+                    INNER JOIN section SC 
+                        ON A.section_id = SC.id 
+                    INNER JOIN year_level YL 
+                        ON S.year = YL.year_id 
+                    INNER JOIN days D 
+                        ON A.day_id = D.day_id 
+                    INNER JOIN time TS 
+                        ON A.S_time_id = TS.time_id 
+                    INNER JOIN time TE 
+                        ON A.E_time_id = TE.time_id 
+                    LEFT JOIN days D2 
+                        ON A.day_id_2 = D2.day_id
+                    LEFT JOIN time TS2
+                        ON A.S_time_id_2 = TS2.time_id
+                    LEFT JOIN time TE2
+                        ON A.E_time_id_2 = TE2.time_id
+                    INNER JOIN semester SE
+                        ON S.semester = SE.sem_id";
 
               $query_run = mysqli_query($con, $query);
 
@@ -130,9 +337,9 @@ include "components/navBar.php"
                   ?>
                   <tr>
                     <td><?php echo $row['subject_code'] ?></td>
-                    <td><?php echo $row['subject_id'] ?></td>
+                    <td><?php echo $row['subject'] ?></td>
                     <td><?php echo $row['unit'] ?></td>
-                    <td><?php echo $row['section_id'] ?></td>
+                    <td><?php echo $row['section'] ?></td>
                     <td><?php echo $row['last_name'] ?>, <?php echo $row['first_name'] ?></td>
                     <?php if ($row['Day2'] == 'N/A') { ?>
                       <td><?php echo $row['days'] ?> - <?php echo $row['startTime'] ?> - <?php echo $row['endTime'] ?></td>
@@ -144,7 +351,7 @@ include "components/navBar.php"
                       </td>
                       <?php
                     } ?>
-                      <td><button type="button" class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i> Edit</button></td>
+                      <!-- <td><button type="button" class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i> Edit</button></td> -->
                       
 
                   </tr>
@@ -466,6 +673,83 @@ include "components/navBar.php"
 
 <script src="../public/js/jquery-3.7.1.min.js"></script>
 <script>
+
+//EDIT STUDENT
+  $('.edit-st').on('click', function(){
+      var srcode = $(this).attr('id');
+
+      $.ajax({
+        url: '../../controller/getSRCst.php',
+        type: 'GET',
+        data: {srcode: srcode},
+        dataType: 'json',
+        success: function(data){
+          var STdata = data[0];
+
+          $('#srcode2').val(STdata.sr_code);
+          $('#lastname2').val(STdata.lastname);
+          $('#firstname2').val(STdata.firstname);
+          $('#middlename2').val(STdata.middlename);
+          $('#year2').val(STdata.year_level);
+          $('#course2').val(STdata.course);
+          $('#sem2').val(STdata.sem_id);
+        }
+      });
+  });
+
+//DELETE STUDENT
+  $('.delete-st').on('click', function(){
+    var srcode = $(this).attr('id');
+console.log(srcode);
+    const swalWithBootstrapButtons = Swal.mixin({
+      customClass: {
+        confirmButton: "btn btn-success ms-2",
+        cancelButton: "btn btn-danger me-2"
+      },
+      buttonsStyling: false
+    });
+    swalWithBootstrapButtons.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "No, cancel!",
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $.ajax({
+          url: '../../controller/deleteSRCst.php',
+          type: 'POST',
+          data: {srcode: srcode},
+          success: function (data) {
+            swalWithBootstrapButtons.fire({
+              title: "Deleted!",
+              icon: "success",
+              toast: true,
+              timer: 1000,
+              timerProgressBar: true,
+              showConfirmButton: false,
+              position: "top-right",
+              didClose: () => {
+                window.location.reload();
+              },
+            });
+          }
+        });
+      } else if (
+        /* Read more about handling dismissals below */
+        result.dismiss === Swal.DismissReason.cancel
+      ) {
+        swalWithBootstrapButtons.fire({
+          title: "Cancelled",
+          text: "file is safe",
+          icon: "error"
+        });
+      }
+    });
+  });
+
     //START ASSIGN SUBJECT JS
         // GET SECTION DEPENDING ON WHAT IS SELECTED SUBJECT
   $("#sub_id").on("change", function () {
@@ -620,4 +904,6 @@ include "components/navBar.php"
     }
   });
     //END OF ASSIGN SUBJECT JS
+
+    
 </script>
