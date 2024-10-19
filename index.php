@@ -2,7 +2,7 @@
 session_start();
 
 if (isset($_SESSION['studentSRCode'])) {
-  header('Location: ../../view/student_view.php');
+  header('Location: view/student_view.php');
   exit();
 }
 ?>
@@ -15,8 +15,8 @@ if (isset($_SESSION['studentSRCode'])) {
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BatStateU Faculty Evaluation</title>
-  <link rel="shortcut icon" href="../../public/picture/cics.png" type="image/x-icon" />
-  <link rel="stylesheet" href="../../public/css/login.css" />
+  <link rel="shortcut icon" href="public/picture/cics.png" type="image/x-icon" />
+  <link rel="stylesheet" href="public/css/login.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
     integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
     crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -26,7 +26,7 @@ if (isset($_SESSION['studentSRCode'])) {
   <!--  -->
 
   <!-- LOCALSTORAGE JS -->
-  <script src="../../public/js/localStorage.js"></script>
+  <script src="public/js/localStorage.js"></script>
   <!--  -->
 </head>
 
@@ -35,10 +35,10 @@ if (isset($_SESSION['studentSRCode'])) {
     <div class="box">
       <div class="inner-box">
         <div class="forms-wrap">
-          <form action="../../controller/login.php" method="POST" autocomplete="off" class="sign-in-form">
+          <form action="controller/login.php" method="POST" autocomplete="off" class="sign-in-form">
             <div class="logo">
-              <img src="../../public/picture/bsu.png" alt="BatStateU-Logo" />
-              <img src="../../public/picture/cics.png" alt="CICS-Logo" />
+              <img src="public/picture/bsu.png" alt="BatStateU-Logo" />
+              <img src="public/picture/cics.png" alt="CICS-Logo" />
             </div>
 
             <div class="heading">
@@ -65,10 +65,10 @@ if (isset($_SESSION['studentSRCode'])) {
             </div>
           </form>
 
-          <form action="../../controller/login.php" method="POST" autocomplete="off" class="sign-up-form">
+          <form action="controller/login.php" method="POST" autocomplete="off" class="sign-up-form">
             <div class="logo">
-              <img src="../../public/picture/bsu.png" alt="BatStateU-Logo" />
-              <img src="../../public/picture/cics.png" alt="CICS-Logo" />
+              <img src="public/picture/bsu.png" alt="BatStateU-Logo" />
+              <img src="public/picture/cics.png" alt="CICS-Logo" />
             </div>
 
             <div class="heading">
@@ -99,9 +99,9 @@ if (isset($_SESSION['studentSRCode'])) {
 
         <div class="carousel">
           <div class="images-wrapper">
-            <img src="../../public/picture/BatStateU-cover-1.jpg" class="image img-1 show" alt />
-            <img src="../../public/picture/BatStateU-cover-2.jpg" class="image img-2" alt />
-            <img src="../../public/picture/BatStateU-cover-3.jpg" class="image img-3" alt />
+            <img src="public/picture/BatStateU-cover-1.jpg" class="image img-1 show" alt />
+            <img src="public/picture/BatStateU-cover-2.jpg" class="image img-2" alt />
+            <img src="public/picture/BatStateU-cover-3.jpg" class="image img-3" alt />
           </div>
 
           <div class="text-slider">
@@ -125,7 +125,7 @@ if (isset($_SESSION['studentSRCode'])) {
   </main>
 
   <!-- Javascript file -->
-  <script src="../../public/js/jquery-3.7.1.min.js"></script>
+  <script src="public/js/jquery-3.7.1.min.js"></script>
 
   <script>
     $(document).ready(function () {
@@ -144,8 +144,8 @@ if (isset($_SESSION['studentSRCode'])) {
 
     })
   </script>
-  <script src="../../public/js/main.js"></script>
-  <script src="../../public/js/sweetalert.min.js"></script>
+  <script src="public/js/main.js"></script>
+  <script src="public/js/sweetalert.min.js"></script>
 
   <?php
   if (isset($_SESSION['status']) && $_SESSION['status'] != '') {
