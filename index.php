@@ -43,7 +43,7 @@ if (isset($_SESSION['studentSRCode'])) {
             </div>
 
             <div class="heading">
-              <h2>Student Loginfs</h2>
+              <h2>Student Login</h2>
               <h6>Are you a Faculty?</h6>
               <a href="#" class="toggle">Click here</a>
             </div>
