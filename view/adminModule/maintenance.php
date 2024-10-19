@@ -162,7 +162,7 @@ include "components/navBar.php"
                   <option value="1">FIRST</option>
                   <option value="2">SECOND</option>
                   <option value="3">THIRD</option>
-                  <option value="4">FOUR</option>
+                  <option value="4">FOURTH</option>
                 </select>
               </div>
               <div class="col">

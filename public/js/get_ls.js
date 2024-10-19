@@ -75,10 +75,14 @@ $(document).ready(function () {
     $("#major").css("display", "none");
   }
 
+  if(getMajor == 0){
+    getMajor = 'null';
+  }
+  
   $.ajax({
     url: "../controller/getSubject.php",
     type: "GET",
-    data: { year_level: year, srcode: srcode, semester: semester },
+    data: { year_level: year, srcode: srcode, semester: semester, major: getMajor },
     dataType: "json",
     success: function (data) {
       if ($.fn.DataTable.isDataTable("#enroll-table")) {
@@ -146,14 +150,10 @@ $(document).ready(function () {
     },
   });
 
-  if(year == 'THIRD' || year == 'FOURTH'){
-    if(getMajor == 'Service Management'){
-      console.log('SM');
-    }else if(getMajor == 'Business Analytics'){
-      console.log('BA');
-    }else if(getMajor == 'Network Technology'){
-      console.log('NT');
-    }
+  if(semester == 'FIRST') {
+    console.log('update semester');
+  }else if(semester == 'SECOND') {
+    console.log('updatte year and semester');
   }
 
   //enrollment part to

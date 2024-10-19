@@ -1,10 +1,11 @@
 $(document).ready(function() {
 
-    $('#studentSRCode').on('change', function(){
+    $('#studentLogin').on('click', function(){
 
         var studentSRCode = $('#studentSRCode').val();
+
         $.ajax({
-            url: '../../controller/localStorage.php',
+            url: 'controller/localStorage.php',
             type: 'GET',
             data: {studentSRCode: studentSRCode},
             dataType: 'json',
