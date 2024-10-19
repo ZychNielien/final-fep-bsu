@@ -229,38 +229,42 @@ if (!isset($_SESSION['studentSRCode'])) {
     <!-- START ENROLLED TABLE -->
     <div class="container bg-light shadow" style="height: auto; min-height: 40vh">
 
-<!-- START TAB -->
-<ul class="nav nav-tabs" id="myTab" role="tablist">
-  <li class="nav-item" role="presentation">
-    <button class="nav-link active" id="enrolledsub-tab" data-bs-toggle="tab" data-bs-target="#enrolledsub" type="button" role="tab" aria-controls="enrolledsub" aria-selected="false"><i class="fa-solid fa-user-check"></i> Enrolled Subjects</button>
-  </li>
-  <li class="nav-item" role="presentation">
-    <button class="nav-link" id="completesub-tab" data-bs-toggle="tab" data-bs-target="#completesub" type="button" role="tab" aria-controls="completesub" aria-selected="true"><i class="fa-solid fa-list-check"></i> Complete Subjects</button>
-  </li>
-</ul>
-<!-- END TAB -->
-<div class="tab-content" id="myTabContent">
-<!-- START ENROLLED TAB -->
-      <div class="tab-pane fade show active p-3" id="enrolledsub" role="tabpanel" aria-labelledby="enrolledsub-tab">
-        <h1 class="text-center" style="font-family: monospace">
-          ENROLLED SUBJECTS
-        </h1>
-        <div>
-          <table class="table table-striped table-bordered text-center" style="font-family: monospace">
-            <thead>
-              <th>Code</th>
-              <th>Description</th>
-              <th>Unit</th>
-              <th>Section</th>
-              <th>Instructor</th>
-              <th>Schedule</th>
-              <th>Action</th>
-            </thead>
-            <tbody>
-              <?php
-              $srcode = $_SESSION['studentSRCode'];
+      <!-- START TAB -->
+      <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="enrolledsub-tab" data-bs-toggle="tab" data-bs-target="#enrolledsub"
+            type="button" role="tab" aria-controls="enrolledsub" aria-selected="false"><i
+              class="fa-solid fa-user-check"></i> Enrolled Subjects</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="completesub-tab" data-bs-toggle="tab" data-bs-target="#completesub" type="button"
+            role="tab" aria-controls="completesub" aria-selected="true"><i class="fa-solid fa-list-check"></i> Complete
+            Subjects</button>
+        </li>
+      </ul>
+      <!-- END TAB -->
+      <div class="tab-content" id="myTabContent">
+        <!-- START ENROLLED TAB -->
+        <div class="tab-pane fade show active p-3" id="enrolledsub" role="tabpanel" aria-labelledby="enrolledsub-tab">
+          <h1 class="text-center" style="font-family: monospace">
+            ENROLLED SUBJECTS
+          </h1>
+          <div>
+            <table class="table table-striped table-bordered text-center" style="font-family: monospace">
+              <thead>
+                <th>Code</th>
+                <th>Description</th>
+                <th>Unit</th>
+                <th>Section</th>
+                <th>Instructor</th>
+                <th>Schedule</th>
+                <th>Action</th>
+              </thead>
+              <tbody>
+                <?php
+                $srcode = $_SESSION['studentSRCode'];
 
-              $query = "SELECT 
+                $query = "SELECT 
                               E.id,
                               S.subject_code, 
                               E.subject_id, 
@@ -301,134 +305,135 @@ if (!isset($_SESSION['studentSRCode'])) {
                           WHERE 
                               E.sr_code = '$srcode'";
 
-              $query_run = mysqli_query($con, $query);
+                $query_run = mysqli_query($con, $query);
 
-              if (mysqli_num_rows($query_run) > 0) {
+                if (mysqli_num_rows($query_run) > 0) {
 
-                $isOpenSQL = "SELECT * FROM academic_year_semester WHERE id = 1";
-                $isOpenSQL_query = mysqli_query($con, $isOpenSQL);
-                $isOpenRow = mysqli_fetch_assoc($isOpenSQL_query);
+                  $isOpenSQL = "SELECT * FROM academic_year_semester WHERE id = 1";
+                  $isOpenSQL_query = mysqli_query($con, $isOpenSQL);
+                  $isOpenRow = mysqli_fetch_assoc($isOpenSQL_query);
 
 
-                while ($row = mysqli_fetch_assoc($query_run)) {
-                  ?>
-                  <tr>
-                    <td><?php echo $row['subject_code'] ?></td>
-                    <td><?php echo $row['subject_id'] ?></td>
-                    <td><?php echo $row['unit'] ?></td>
-                    <td><?php echo $row['section_id'] ?></td>
-                    <td><?php echo $row['last_name'] ?>, <?php echo $row['first_name'] ?></td>
-                    <?php if ($row['Day2'] == 'N/A') { ?>
-                      <td><?php echo $row['days'] ?> - <?php echo $row['startTime'] ?> - <?php echo $row['endTime'] ?></td>
-                      <?php
-                    } else {
-                      ?>
-                      <td><?php echo $row['days'] ?> - <?php echo $row['startTime'] ?> - <?php echo $row['endTime'] ?> /
-                        <?php echo $row['Day2'] ?> - <?php echo $row['startTime2'] ?> - <?php echo $row['endTime2'] ?>
-                      </td>
-                      <?php
-                    } ?>
-
-                    <?php
-
-                    if ($isOpenRow['isOpen'] == 1) {
-                      if ($row['eval_status'] == 0) {
-                        ?>
-
-                        <td><button type="button" class="btn btn-success m-2 evaluate-btn" data-bs-toggle="modal"
-                            data-bs-target="#evaluationForm" data-id="<?php echo $row['faculty_id'] ?>"
-                            data-enrolled-id="<?php echo $row['id'] ?>" data-first-name="<?php echo $row['first_name'] ?>"
-                            data-last-name="<?php echo $row['last_name'] ?>" date-subject-id="<?php echo $row['subject_id'] ?>">
-                            Evaluate
-                          </button></td>
+                  while ($row = mysqli_fetch_assoc($query_run)) {
+                    ?>
+                    <tr>
+                      <td><?php echo $row['subject_code'] ?></td>
+                      <td><?php echo $row['subject_id'] ?></td>
+                      <td><?php echo $row['unit'] ?></td>
+                      <td><?php echo $row['section_id'] ?></td>
+                      <td><?php echo $row['last_name'] ?>, <?php echo $row['first_name'] ?></td>
+                      <?php if ($row['Day2'] == 'N/A') { ?>
+                        <td><?php echo $row['days'] ?> - <?php echo $row['startTime'] ?> - <?php echo $row['endTime'] ?></td>
                         <?php
                       } else {
                         ?>
-
-                        <td>
-                          <button class="btn btn-secondary" disabled>Evaluated</button>
+                        <td><?php echo $row['days'] ?> - <?php echo $row['startTime'] ?> - <?php echo $row['endTime'] ?> /
+                          <?php echo $row['Day2'] ?> - <?php echo $row['startTime2'] ?> - <?php echo $row['endTime2'] ?>
                         </td>
                         <?php
-                      }
-                    } else {
-                      ?>
-                      <td>
-                        <span>Evaluation for Faculty Development is still closed.</span>
-                      </td>
-                      <?php
-                    } ?>
+                      } ?>
 
+                      <?php
+
+                      if ($isOpenRow['isOpen'] == 1) {
+                        if ($row['eval_status'] == 0) {
+                          ?>
+
+                          <td><button type="button" class="btn btn-success m-2 evaluate-btn" data-bs-toggle="modal"
+                              data-bs-target="#evaluationForm" data-id="<?php echo $row['faculty_id'] ?>"
+                              data-enrolled-id="<?php echo $row['id'] ?>" data-first-name="<?php echo $row['first_name'] ?>"
+                              data-last-name="<?php echo $row['last_name'] ?>"
+                              date-subject-id="<?php echo $row['subject_id'] ?>">
+                              Evaluate
+                            </button></td>
+                          <?php
+                        } else {
+                          ?>
+
+                          <td>
+                            <button class="btn btn-secondary" disabled>Evaluated</button>
+                          </td>
+                          <?php
+                        }
+                      } else {
+                        ?>
+                        <td>
+                          <span>Evaluation for Faculty Development is still closed.</span>
+                        </td>
+                        <?php
+                      } ?>
+
+                    </tr>
+                    <?php
+                  }
+                } else {
+                  ?>
+                  <tr>
+                    <td colspan="7">No Enrolled Subject!</td>
                   </tr>
                   <?php
                 }
-              } else {
                 ?>
-                <tr>
-                  <td colspan="6">No Enrolled Subject!</td>
-                </tr>
-                <?php
-              }
-              ?>
 
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-<!-- END -->
+        <!-- END -->
 
-<!-- START OF COMPLETE SUB -->
-    <div class="tab-pane fade p-3" id="completesub" role="tabpanel" aria-labelledby="completesub-tab">
-        <h1 class="text-center" style="font-family: monospace">
-          COMPLETE SUBJECTS
-        </h1>
-        <div>
-          <table class="table table-striped table-bordered text-center" style="font-family: monospace">
-            <thead>
-              <th>Subject</th>
-              <th>Instructor</th>
-              <th>Section</th>
-            </thead>
-            <tbody>
+        <!-- START OF COMPLETE SUB -->
+        <div class="tab-pane fade p-3" id="completesub" role="tabpanel" aria-labelledby="completesub-tab">
+          <h1 class="text-center" style="font-family: monospace">
+            COMPLETE SUBJECTS
+          </h1>
+          <div>
+            <table class="table table-striped table-bordered text-center" style="font-family: monospace">
+              <thead>
+                <th>Subject</th>
+                <th>Instructor</th>
+                <th>Section</th>
+              </thead>
+              <tbody>
 
-            <?php
-              $srcode = $_SESSION['studentSRCode'];
-              
-              $query = "SELECT C.id, S.subject, I.last_name, I.first_name, SC.section FROM `complete_subject` C INNER JOIN subject S ON C.subject_id = S.subject_id INNER JOIN instructor I ON C.faculty_id = I.faculty_Id INNER JOIN section SC ON C.section_id = SC.id WHERE C.sr_code = '$srcode'";
-
-              $query_run = mysqli_query($con, $query);
-
-              if (mysqli_num_rows($query_run) > 0) {
-                while ($row = mysqli_fetch_assoc($query_run)) {
-            ?>
-                <tr>
-                  <td><?php echo $row['subject'] ?></td>
-                  <td><?php echo $row['last_name'] ?>, <?php echo $row['first_name'] ?></td>
-                  <td><?php echo $row['section'] ?></td>
-                </tr>
-                
                 <?php
+                $srcode = $_SESSION['studentSRCode'];
+
+                $query = "SELECT C.id, S.subject, I.last_name, I.first_name, SC.section FROM `complete_subject` C INNER JOIN subject S ON C.subject_id = S.subject_id INNER JOIN instructor I ON C.faculty_id = I.faculty_Id INNER JOIN section SC ON C.section_id = SC.id WHERE C.sr_code = '$srcode'";
+
+                $query_run = mysqli_query($con, $query);
+
+                if (mysqli_num_rows($query_run) > 0) {
+                  while ($row = mysqli_fetch_assoc($query_run)) {
+                    ?>
+                    <tr>
+                      <td><?php echo $row['subject'] ?></td>
+                      <td><?php echo $row['last_name'] ?>, <?php echo $row['first_name'] ?></td>
+                      <td><?php echo $row['section'] ?></td>
+                    </tr>
+
+                    <?php
+                  }
+                } else {
+                  ?>
+                  <tr>
+                    <td colspan="4">No Complete Subject!</td>
+                  </tr>
+                  <?php
                 }
-              } else {
                 ?>
-                <tr>
-                  <td colspan="4">No Complete Subject!</td>
-                </tr>
-                <?php
-              }
-              ?>
-              
-            </tbody>
-          </table>
-        </div>
-<!-- END -->
+
+              </tbody>
+            </table>
+          </div>
+          <!-- END -->
 
 
-        <!-- <h1>
+          <!-- <h1>
             <i class="fa-solid fa-circle-exclamation"></i> NO ENROLLED
             SUBJECT!
           </h1> -->
+        </div>
       </div>
-    </div>
 
     </div>
 
@@ -787,7 +792,8 @@ if (!isset($_SESSION['studentSRCode'])) {
                   <option value="Business Analytics">Business Analytics</option>
                 </select>
               </div>
-              <p class="text-danger" style="font-size: 12px;">*If your major is submitted successfully, you will be redirected to the login page.*</p>
+              <p class="text-danger" style="font-size: 12px;">*If your major is submitted successfully, you will be
+                redirected to the login page.*</p>
             </div>
         </div>
         <div class="modal-footer d-flex justify-content-between">

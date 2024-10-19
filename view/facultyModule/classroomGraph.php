@@ -1,6 +1,6 @@
 <?php
 
-include "model/dbconnection.php";
+include "../../model/dbconnection.php";
 
 session_start();
 
@@ -107,56 +107,15 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
         if ($categoryCount > 0) {
             $finalAverageRating = $totalAverage / $categoryCount;
 
-            // Store the final average per semester and academic year
+            // Push data for JSON response
             $finalAveragesPerSemester[] = [
                 'semester' => $selectedSemester,
                 'academic_year' => $selectedAcademicYear,
                 'finalAverageRating' => $finalAverageRating
             ];
-
-            // Push data for chart
-            $semesterLabels[] = $selectedSemester . ' ' . $selectedAcademicYear;
-            $finalAverageRatings[] = $finalAverageRating;
         }
     }
 
-} else {
-    echo "<h2 style='text-align: center; color: red;'>No record found.</h2>";
+    echo json_encode($finalAveragesPerSemester);
 }
 ?>
-
-<!-- Include Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- Create a canvas element for the chart -->
-<canvas id="finalAverageChart" width="400" height="200"></canvas>
-
-<script>
-    // Data from PHP
-    var labels = <?php echo json_encode($semesterLabels); ?>;
-    var data = <?php echo json_encode($finalAverageRatings); ?>;
-
-    // Chart.js configuration
-    var ctx = document.getElementById('finalAverageChart').getContext('2d');
-    var finalAverageChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Final Average Rating',
-                data: data,
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 2,
-                fill: false
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 5
-                }
-            }
-        }
-    });
-</script>

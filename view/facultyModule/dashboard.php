@@ -371,6 +371,18 @@ $semestersJson = json_encode($semesters);
 
             </div>
 
+
+
+        </div>
+        <div class="graphContainer d-flex justify-content-evenly align-items-center my-5">
+            <div class="chart-container  justify-content-center">
+                <h3 class="text-center">Latest Peer to Peer Evaluation Results</h3>
+                <canvas id="averageRatingChart" style="min-height: 350px;"></canvas>
+            </div>
+            <div class="chart-container  justify-content-center">
+                <h3 class="text-center">Latest Classroom Evaluation Results</h3>
+                <canvas id="finalAverageChart" style="min-height: 350px;"></canvas>
+            </div>
         </div>
 
         <div class="modal fade" id="vcaaResults" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
@@ -451,6 +463,98 @@ $semestersJson = json_encode($semesters);
     <script src="../../public/js/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
+    <script>
+        $(document).ready(function () {
+            // Fetch the data using jQuery AJAX
+            $.ajax({
+                url: 'classroomGraph.php', // Update with the actual path to your PHP file
+                method: 'POST',
+                dataType: 'json',
+                success: function (response) {
+                    // Prepare the data for the chart
+                    var labels = [];
+                    var data = [];
+
+                    $.each(response, function (index, value) {
+                        labels.push(value.semester + ' ' + value.academic_year);
+                        data.push(value.finalAverageRating);
+                    });
+
+                    // Render the chart using Chart.js
+                    var ctx = document.getElementById('finalAverageChart').getContext('2d');
+                    var finalAverageChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Final Average Rating',
+                                data: data,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 2,
+                                fill: false
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 5
+                                }
+                            }
+                        }
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching data: ' + error);
+                }
+            });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            // Show loading indicator
+            $('#loading').show();
+
+            $.ajax({
+                url: 'peerToPeerGraph.php',
+                type: 'GET',
+                dataType: 'json',
+                success: function (categoriesData) {
+                    // Hide loading indicator
+                    $('#loading').hide();
+
+                    const peerToPeerctx = document.getElementById('averageRatingChart').getContext('2d');
+                    const colors = Object.keys(categoriesData).map(() => {
+                        // Generate random colors for each bar
+                        return `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() *
+                            255)}, 0.6)`;
+                    });
+
+                    const chart = new Chart(peerToPeerctx, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(categoriesData), // Category names
+                            datasets: [{
+                                label: 'Average Ratings',
+                                data: Object.values(categoriesData), // Average ratings
+                                backgroundColor: colors,
+                                borderColor: colors.map(color => color.replace('0.6', '1')), // Use darker colors for borders
+                                borderWidth: 1
+                            }]
+                        },
+
+                    });
+                },
+                error: function (xhr, status, error) {
+                    // Hide loading indicator and show error message
+                    $('#loading').hide();
+                    console.error("AJAX Error: ", status, error);
+                    alert("An error occurred while fetching data. Please try again later.");
+                }
+            });
+        });
+    </script>
 
     <script>
         function printPartOfPage(elementId) {
