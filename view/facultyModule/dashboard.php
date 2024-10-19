@@ -1,13 +1,8 @@
 <?php
 include "components/navBar.php";
-require '../../vendor/autoload.php';
-use PhpOffice\PhpSpreadsheet\IOFactory;
+
 include "../../model/dbconnection.php";
 
-function sanitizeColumnName($name)
-{
-    return preg_replace('/[^a-zA-Z0-9_]/', '', trim($name));
-}
 
 $sqlSAY = "SELECT * FROM `academic_year_semester`";
 $sqlSAY_query = mysqli_query($con, $sqlSAY);
@@ -15,72 +10,6 @@ $SAY = mysqli_fetch_assoc($sqlSAY_query);
 
 $nowSemester = $SAY['semester'];
 $nowAcademicYear = $SAY['academic_year'];
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['excel_file'])) {
-    if ($_FILES['excel_file']['error'] == 0) {
-        $fileTmpPath = $_FILES['excel_file']['tmp_name'];
-        $originalFileName = $_FILES['excel_file']['name'];
-        $uniqueFileName = time() . '_' . $originalFileName;
-        $destinationPath = '../../public/excelFiles/' . $uniqueFileName;
-
-        $fileExtension = pathinfo($originalFileName, PATHINFO_EXTENSION);
-        if (!in_array($fileExtension, ['xls', 'xlsx'])) {
-            $message = "Invalid file type. Only Excel files (.xls, .xlsx) are allowed.";
-        } elseif (
-            !in_array(mime_content_type($fileTmpPath), [
-                'application/vnd.ms-excel',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            ])
-        ) {
-            $message = "Invalid file type. Only Excel files (.xls, .xlsx) are allowed.";
-        } else {
-            $userId = $userRow['faculty_Id'];
-            $result = $con->query("SELECT file_name, id FROM vcaaexcel WHERE faculty_Id = '$userId' AND semester = '$nowSemester' AND academic_year = '$nowAcademicYear' LIMIT 1");
-
-            if ($row = $result->fetch_assoc()) {
-                $oldFileName = $row['file_name'];
-                $recordId = $row['id'];
-
-                if (file_exists('../../public/excelFiles/' . $oldFileName)) {
-                    unlink('../../public/excelFiles/' . $oldFileName);
-                }
-            }
-
-            if (move_uploaded_file($fileTmpPath, $destinationPath)) {
-                try {
-                    $spreadsheet = IOFactory::load($destinationPath);
-                    $sheet = $spreadsheet->getActiveSheet();
-                    $cellValue = $sheet->getCell('D50')->getCalculatedValue();
-
-                    if ($cellValue !== null && $cellValue !== '') {
-                        if (isset($recordId)) {
-                            $stmt = $con->prepare("UPDATE vcaaexcel SET file_name = ?, cell_value = ? WHERE id = ? AND semester = ? AND academic_year = ?");
-                            $stmt->bind_param("ssiis", $uniqueFileName, $cellValue, $recordId, $nowSemester, $nowAcademicYear);
-                        } else {
-                            $stmt = $con->prepare("INSERT INTO vcaaexcel (file_name, cell_value, faculty_Id, semester, academic_year) VALUES (?, ?, ?, ?, ?)");
-                            $stmt->bind_param("ssiss", $uniqueFileName, $cellValue, $userId, $nowSemester, $nowAcademicYear);
-                        }
-
-                        if ($stmt->execute()) {
-                            $message = "Your VCAA has been successfully " . (isset($recordId) ? "updated." : "uploaded.");
-                        } else {
-                            $message = "Error: " . $stmt->error;
-                        }
-                        $stmt->close();
-                    } else {
-                        $message = "Cell value is empty. Data not saved to the database.";
-                    }
-                } catch (Exception $e) {
-                    $message = "Error loading file: " . $e->getMessage();
-                }
-            } else {
-                $message = "Error saving the uploaded file.";
-            }
-        }
-    } else {
-        $message = "Please upload a valid Excel file.";
-    }
-}
 
 $userId = $userRow['faculty_Id'];
 $result = $con->query("SELECT cell_value FROM vcaaexcel WHERE faculty_Id = '$userId' AND semester = '$nowSemester' AND academic_year = '$nowAcademicYear' LIMIT 1");
@@ -91,7 +20,10 @@ if ($result && mysqli_num_rows($result) > 0) {
 } else {
     $average = 0;
 }
-
+function sanitizeColumnName($name)
+{
+    return preg_replace('/[^a-zA-Z0-9_]/', '', trim($name));
+}
 function getFinalAverageRating($facultyID, $semester, $academic_year, $selectedSubject, $con)
 {
     $totalAverage = 0;
@@ -190,7 +122,7 @@ while ($subject = mysqli_fetch_assoc($sqlSubject_query)) {
 }
 
 $faculty_Id = mysqli_real_escape_string($con, $_SESSION["userid"]);
-$sql = "SELECT subject, combined_average, semester, academic_year FROM faculty_averages WHERE faculty_Id = '$faculty_Id' ORDER BY academic_year, semester";
+$sql = "SELECT subject, combined_average, semester, academic_year FROM faculty_averages WHERE faculty_Id = '$faculty_Id' ORDER BY academic_year, semester ";
 $result = mysqli_query($con, $sql);
 
 $semesters = [];
@@ -223,7 +155,6 @@ while ($row = mysqli_fetch_assoc($result)) {
 $subjectsJson = json_encode(array_keys($subjectData));
 $subjectDataJson = json_encode($subjectData);
 $semestersJson = json_encode($semesters);
-
 ?>
 
 <!DOCTYPE html>
@@ -461,6 +392,7 @@ $semestersJson = json_encode($semesters);
     </section>
 
     <script src="../../public/js/chart.js"></script>
+    <script src="../../public/js/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
     <script>
@@ -688,7 +620,6 @@ $semestersJson = json_encode($semesters);
     </script>
 
     <script>
-
         const subjects = <?php echo $subjectsJson; ?>;
         const subjectData = <?php echo $subjectDataJson; ?>;
         const semesters = <?php echo $semestersJson; ?>;
@@ -882,7 +813,7 @@ $semestersJson = json_encode($semesters);
             }
 
             $('#printBtn').click(function () {
-                printPartOfPage('lineChart');
+                printPartOfPage('barChart');
             });
         });
 

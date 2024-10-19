@@ -1,5 +1,5 @@
 <?php
-include "model/dbconnection.php";
+include "../../model/dbconnection.php";
 session_start();
 
 $userId = $_SESSION["userid"];
@@ -11,7 +11,7 @@ $FacultyID = $userRow['faculty_Id'];
 
 $sqlSubject = "
     SELECT DISTINCT sf.semester, sf.academic_year 
-    FROM classroomobservation sf
+    FROM peertopeerform sf
     WHERE sf.toFacultyID = '$FacultyID'
     ORDER BY sf.semester DESC, sf.academic_year DESC
 ";
@@ -24,7 +24,7 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
         $semester = $subject['semester'];
         $academicYear = $subject['academic_year'];
 
-        $sql = "SELECT * FROM `studentscategories`";
+        $sql = "SELECT * FROM `facultycategories`";
         $sql_query = mysqli_query($con, $sql);
 
         if (mysqli_num_rows($sql_query) > 0) {
@@ -34,11 +34,11 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
                 $totalRatings = [0, 0, 0, 0, 0];
                 $ratingCount = 0;
 
-                $sqlcriteria = "SELECT * FROM `studentscriteria` WHERE studentsCategories = '$categories'";
+                $sqlcriteria = "SELECT * FROM `facultycriteria` WHERE facultyCategories = '$categories'";
                 $resultCriteria = mysqli_query($con, $sqlcriteria);
 
                 if (mysqli_num_rows($resultCriteria) > 0) {
-                    $SQLFaculty = "SELECT * FROM `classroomobservation` WHERE toFacultyID = '$FacultyID' 
+                    $SQLFaculty = "SELECT * FROM `peertopeerform` WHERE toFacultyID = '$FacultyID' 
                     AND semester = '$semester' 
                     AND academic_year = '$academicYear'";
 
@@ -46,7 +46,7 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
 
                     while ($ratingRow = mysqli_fetch_assoc($SQLFaculty_query)) {
                         while ($criteriaRow = mysqli_fetch_assoc($resultCriteria)) {
-                            $columnName = preg_replace('/[^a-zA-Z0-9_]/', '', trim($criteriaRow['studentsCategories']));
+                            $columnName = preg_replace('/[^a-zA-Z0-9_]/', '', trim($criteriaRow['facultyCategories']));
                             $finalColumnName = $columnName . $criteriaRow['id'];
 
                             $criteriaRating = $ratingRow[$finalColumnName] ?? null;
