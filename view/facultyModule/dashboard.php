@@ -688,6 +688,7 @@ $semestersJson = json_encode($semesters);
     </script>
 
     <script>
+
         const subjects = <?php echo $subjectsJson; ?>;
         const subjectData = <?php echo $subjectDataJson; ?>;
         const semesters = <?php echo $semestersJson; ?>;
@@ -803,8 +804,8 @@ $semestersJson = json_encode($semesters);
         filterEndSemesters();
         document.getElementById('endSemesterFilter').value = semesters[semesters.length - 1];
         updateCharts();
-    </script>
 
+    </script>
 
     <script src="../../bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="../../public/js/sweetalert2@11.js"></script>
