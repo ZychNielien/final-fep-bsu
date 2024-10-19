@@ -7,7 +7,7 @@ if (isset($_GET['year_level'])) {
     $sem = $_GET['semester'];
 
     $query = "WITH sec_count AS (
-                    SELECT 
+                        SELECT 
                             COUNT(section_id) AS SLOT, 
                             subject_id 
                         FROM enrolled_student 
@@ -73,8 +73,9 @@ if (isset($_GET['year_level'])) {
                                 WHERE sr_code = '$srcode'
                             )
                         )
-            UNION ALL
-                    SELECT A.id, 
+                    UNION ALL
+                    SELECT 
+                        A.id, 
                         S.subject_code, 
                         S.subject, 
                         S.unit, 
@@ -91,13 +92,13 @@ if (isset($_GET['year_level'])) {
                         COALESCE(TE2.time, 'N/A') AS endTime2
                     FROM failed_subject F 
                     INNER JOIN subject S 
-                    	ON F.subject_id = S.subject_id 
+                        ON F.subject_id = S.subject_id 
                     INNER JOIN assigned_subject A
-                    	ON F.subject_id = A.subject_id
+                        ON F.subject_id = A.subject_id
                     INNER JOIN instructor I 
-                    	ON A.faculty_id = I.faculty_id 
+                        ON A.faculty_id = I.faculty_id 
                     INNER JOIN section SC 
-                    	ON A.section_id = SC.id 
+                        ON A.section_id = SC.id 
                     INNER JOIN year_level YL 
                         ON S.year = YL.year_id 
                     LEFT JOIN sec_count SCO 
@@ -117,7 +118,12 @@ if (isset($_GET['year_level'])) {
                     INNER JOIN semester SE
                         ON S.semester = SE.sem_id
                     WHERE F.sr_code = '$srcode'
-                    AND SE.semester = '$sem'";
+                        AND SE.semester = '$sem'
+                        AND F.subject_id NOT IN (
+                            SELECT subject_id 
+                            FROM enrolled_student
+                            WHERE sr_code = '$srcode'
+                        );";
 
     $query_run = mysqli_query($con, $query);
 

@@ -227,9 +227,21 @@ if (!isset($_SESSION['studentSRCode'])) {
     </div>
     <!-- END SECOND NAVBAR -->
     <!-- START ENROLLED TABLE -->
-    <div class="container bg-light d-flex align-items-center justify-content-center shadow"
-      style="height: auto; min-height: 40vh">
-      <div class="p-3">
+    <div class="container bg-light shadow" style="height: auto; min-height: 40vh">
+
+<!-- START TAB -->
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="enrolledsub-tab" data-bs-toggle="tab" data-bs-target="#enrolledsub" type="button" role="tab" aria-controls="enrolledsub" aria-selected="false"><i class="fa-solid fa-user-check"></i> Enrolled Subjects</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="completesub-tab" data-bs-toggle="tab" data-bs-target="#completesub" type="button" role="tab" aria-controls="completesub" aria-selected="true"><i class="fa-solid fa-list-check"></i> Complete Subjects</button>
+  </li>
+</ul>
+<!-- END TAB -->
+<div class="tab-content" id="myTabContent">
+<!-- START ENROLLED TAB -->
+      <div class="tab-pane fade show active p-3" id="enrolledsub" role="tabpanel" aria-labelledby="enrolledsub-tab">
         <h1 class="text-center" style="font-family: monospace">
           ENROLLED SUBJECTS
         </h1>
@@ -361,8 +373,56 @@ if (!isset($_SESSION['studentSRCode'])) {
             </tbody>
           </table>
         </div>
+      </div>
+<!-- END -->
 
+<!-- START OF COMPLETE SUB -->
+    <div class="tab-pane fade p-3" id="completesub" role="tabpanel" aria-labelledby="completesub-tab">
+        <h1 class="text-center" style="font-family: monospace">
+          COMPLETE SUBJECTS
+        </h1>
+        <div>
+          <table class="table table-striped table-bordered text-center" style="font-family: monospace">
+            <thead>
+              <th>Subject</th>
+              <th>Instructor</th>
+              <th>Section</th>
+              <th>Action</th>
+            </thead>
+            <tbody>
 
+            <?php
+              $srcode = $_SESSION['studentSRCode'];
+              
+              $query = "SELECT C.id, S.subject, I.last_name, I.first_name, SC.section FROM `complete_subject` C INNER JOIN subject S ON C.subject_id = S.subject_id INNER JOIN instructor I ON C.faculty_id = I.faculty_Id INNER JOIN section SC ON C.section_id = SC.id WHERE C.sr_code = '$srcode'";
+
+              $query_run = mysqli_query($con, $query);
+
+              if (mysqli_num_rows($query_run) > 0) {
+                while ($row = mysqli_fetch_assoc($query_run)) {
+            ?>
+                <tr>
+                  <td><?php echo $row['subject'] ?></td>
+                  <td><?php echo $row['last_name'] ?>, <?php echo $row['first_name'] ?></td>
+                  <td><?php echo $row['section'] ?></td>
+                  <td><button class="btn btn-success">button</button></td>
+                </tr>
+                
+                <?php
+                }
+              } else {
+                ?>
+                <tr>
+                  <td colspan="4">No Enrolled Subject!</td>
+                </tr>
+                <?php
+              }
+              ?>
+              
+            </tbody>
+          </table>
+        </div>
+<!-- END -->
 
 
         <!-- <h1>
@@ -370,6 +430,8 @@ if (!isset($_SESSION['studentSRCode'])) {
             SUBJECT!
           </h1> -->
       </div>
+    </div>
+
     </div>
 
 
@@ -442,7 +504,7 @@ if (!isset($_SESSION['studentSRCode'])) {
                   <table class="table table-striped table-bordered text-center align-middle">
 
                     <thead>
-                      <tr class="bg-danger text-uppercase">
+                      <tr class="bg-danger text-light text-uppercase">
                         <th class="align-middle text-center">Numerical
                           Rating</th>
                         <th class="align-middle text-center">Descriptive
@@ -510,6 +572,7 @@ if (!isset($_SESSION['studentSRCode'])) {
                   <input type="date" id="dateInput" name="date" required>
                   <input type="text" id="enroll" name="enrolled">
                   <input type="text" id="subjectID" name="subject">
+                  <input type="text" name="srcode" value="<?php echo $_SESSION['studentSRCode'] ?>">
                 </div>
 
                 <?php
@@ -726,6 +789,7 @@ if (!isset($_SESSION['studentSRCode'])) {
                   <option value="Business Analytics">Business Analytics</option>
                 </select>
               </div>
+              <p class="text-danger" style="font-size: 12px;">*If your major is submitted successfully, you will be redirected to the login page.*</p>
             </div>
         </div>
         <div class="modal-footer d-flex justify-content-between">

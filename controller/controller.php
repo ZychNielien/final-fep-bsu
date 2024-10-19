@@ -8,8 +8,8 @@ if (isset($_POST['submit_sub'])) {
     $subject = $_POST['subject'];
     $unit = $_POST['unit'];
     $code = $_POST['code'];
-    $sem = $_POST['sem'];
-    $year = $_POST['year'];
+    $sem = $_POST['semes'];
+    $year = $_POST['yearlvl'];
 
 
     $query = "INSERT INTO subject (`subject`, `unit`, `year`, `semester`, `subject_code`) VALUES ('$subject', '$unit', '$year','$sem','$code')";
@@ -18,19 +18,45 @@ if (isset($_POST['submit_sub'])) {
     if ($query_run) {
         $_SESSION['status'] = "New Subject has been added Successfully";
         $_SESSION['status-code'] = "success";
-        header("location:../view/test.php");
+        header("location: ../view/adminModule/maintenance.php");
     } else {
         $_SESSION['status'] = "Something is wrong";
         $_SESSION['status-code'] = "error";
-        header("location:../view/test.php");
+        header("location: ../view/adminModule/maintenance.php");
     }
+}
+
+//EDIT SUBJECT
+if(isset($_POST['updatesub'])){
+
+    $subID = $_POST['subID'];
+    $sub = $_POST['subject2'];
+    $unit = $_POST['unit2'];
+    $code = $_POST['code2'];
+    $sem = $_POST['semes2'];
+    $year = $_POST['yearlvl2'];
+
+    $query = "UPDATE subject SET subject = '$sub', unit = '$unit', subject_code = '$code', semester = '$sem', year = '$year' WHERE subject_id = '$subID'";
+
+    $query_run = mysqli_query($con, $query);
+
+    if ($query_run) {
+        $_SESSION['status'] = "Updated Successfully";
+        $_SESSION['status-code'] = "success";
+        header("location: ../view/adminModule/maintenance.php");
+    } else {
+        $_SESSION['status'] = "Something is wrong";
+        $_SESSION['status-code'] = "error";
+        header("location: ../view/adminModule/maintenance.php");
+    }
+
 }
 
 // ADD SECTION 
 if (isset($_POST['submit_section'])) {
     $section = $_POST['addsection'];
-    $year = $_POST['year'];
-    $sem = $_POST['sem'];
+    $year = $_POST['year_id'];
+    $sem = $_POST['sem_id'];
 
 
     $query = "INSERT INTO section (`section`, `year_id`, `sem_id`) VALUES ('$section', '$year', '$sem')";
@@ -39,12 +65,35 @@ if (isset($_POST['submit_section'])) {
     if ($query_run) {
         $_SESSION['status'] = "New Section has been added Successfully";
         $_SESSION['status-code'] = "success";
-        header("location:../view/test.php");
+        header("location: ../view/adminModule/maintenance.php");
     } else {
         $_SESSION['status'] = "Something is wrong";
         $_SESSION['status-code'] = "error";
-        header("location:../view/test.php");
+        header("location: ../view/adminModule/maintenance.php");
     }
+}
+
+//EDIT SECTION
+if(isset($_POST['updateSection'])){
+
+    $id = $_POST['secID'];
+    $sec = $_POST['addsection2'];
+    $year = $_POST['year_id2'];
+    $sem = $_POST['sem_id2'];
+
+    $query = "UPDATE section SET section = '$sec', year_id = '$year', sem_id = '$sem' WHERE id = '$id'";
+    $query_run = mysqli_query($con, $query);
+
+    if ($query_run) {
+        $_SESSION['status'] = "Updated Successfully";
+        $_SESSION['status-code'] = "success";
+        header("location: ../view/adminModule/maintenance.php");
+    } else {
+        $_SESSION['status'] = "Something is wrong";
+        $_SESSION['status-code'] = "error";
+        header("location: ../view/adminModule/maintenance.php");
+    }
+
 }
 
 // ASSIGNED INSTRUCTORS
@@ -127,6 +176,50 @@ if(isset($_POST['submit_student'])){
             }
         }
     }
+}
+
+//ADD PREREQUISITE SUBJECT
+if(isset($_POST['submit_prereq'])){
+
+    $sub = $_POST['prereq_sub'];
+    $prereq = $_POST['prerequisite'];
+    $year = $_POST['prereq_year'];
+
+    $query = "INSERT INTO prereq_subject (subject_id, prereq_id, year_id) VALUES ('$sub', '$prereq', '$year')";
+    $query_run = mysqli_query($con, $query);
+
+    if ($query_run) {
+        $_SESSION['status'] = "Save Successfully";
+        $_SESSION['status-code'] = "success";
+        header("location:../view/adminModule/maintenance.php");
+    } else {
+        $_SESSION['status'] = "Something is wrong";
+        $_SESSION['status-code'] = "error";
+        header("location:../view/adminModule/maintenance.php");
+    }
+}
+
+//EDIT PREREQUISITE SUBJECT
+if(isset($_POST['update_prereq'])) {
+
+    $id = $_POST['prereqID'];
+    $sub = $_POST['prereq_sub2'];
+    $prereq = $_POST['prerequisite2'];
+    $year = $_POST['prereq_year2'];
+
+    $query = "UPDATE prereq_subject SET subject_id = '$sub', prereq_id = '$prereq', year_id = '$year' WHERE id = '$id'";
+    $query_run = mysqli_query($con, $query);
+
+    if ($query_run) {
+        $_SESSION['status'] = "Updated Successfully";
+        $_SESSION['status-code'] = "success";
+        header("location: ../view/adminModule/maintenance.php");
+    } else {
+        $_SESSION['status'] = "Something is wrong";
+        $_SESSION['status-code'] = "error";
+        header("location: ../view/adminModule/maintenance.php");
+    }
+
 }
 
 
