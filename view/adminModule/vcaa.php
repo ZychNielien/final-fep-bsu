@@ -266,8 +266,14 @@ ob_end_flush();
                         if ($sql_query) {
                             while ($vcaaRow = mysqli_fetch_assoc($sql_query)) {
                                 $facultyID = $vcaaRow['faculty_Id'];
+                                $sqlSAYs = "SELECT * FROM `academic_year_semester` WHERE id = 1";
+                                $sqlSAY_querys = mysqli_query($con, $sqlSAYs);
+                                $SAYs = mysqli_fetch_assoc($sqlSAY_querys);
 
-                                $getVCAA = "SELECT * FROM `vcaaexcel` WHERE faculty_Id = '$facultyID'";
+                                $nowSemesters = $SAYs['semester'];
+                                $nowAcademicYears = $SAYs['academic_year'];
+
+                                $getVCAA = "SELECT * FROM `vcaaexcel` WHERE faculty_Id = '$facultyID' AND academic_year = '$nowAcademicYears' AND semester = '$nowSemesters'";
                                 $getVCAA_query = mysqli_query($con, $getVCAA);
                                 $vcaaValue = mysqli_fetch_assoc($getVCAA_query);
 

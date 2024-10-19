@@ -458,7 +458,7 @@ $FacultyID = $userRow['faculty_Id'];
 
     $(document).ready(function () {
         const today = new Date().toISOString().split('T')[0];
-        $('#date-select').attr('min', today).val(today);
+        $('#date-select').val(today);
         loadBookings();
         createReservationTable(); // Pass currentBookings here for the first time
         updateStartTimeOptions();
@@ -474,6 +474,14 @@ $FacultyID = $userRow['faculty_Id'];
             checkStartTimeAvailability();
             updateSlotOptions();
         });
+        $('#date-select').on('input', function () {
+            const selectedDate = $(this).val();
+            const currentDate = new Date().toISOString().split('T')[0];
+
+            // I-disable ang start-time-select kung ang napiling petsa ay nakalipas na
+            $('#start-time-select').prop('disabled', selectedDate < currentDate);
+        });
+
         // Call this function after the relevant inputs are changed
         $('#date-select, #start-time-select, #end-time-select').on('change', checkSlotAvailability);
 
@@ -580,18 +588,26 @@ $FacultyID = $userRow['faculty_Id'];
 
                 if (bookedSlots[slotKey1]) {
                     const booking = bookedSlots[slotKey1];
-                    cell1.addClass('py-3 booked-slot').css({
-                        'border': '2px solid #fff',
-                        'color': '#000',
-                        'background': '#f2b2b2',
-                        'cursor': 'pointer' // Indicate that the slot is clickable
-                    }).html(`${booking.name}<br>${booking.room}`);
-
+                    if (booking.evaluation_status == 1) {
+                        cell1.addClass('py-3 evaluated-slot').css({
+                            'border': '2px solid #fff',
+                            'color': '#000',
+                            'background-color': '#80deea'
+                        }).html(`${booking.name}<br> Evaluated`)
+                    } else {
+                        cell1.addClass('py-3 booked-slot').css({
+                            'border': '2px solid #fff',
+                            'color': '#000',
+                            'background': '#f2b2b2', // Color for regular booked slots
+                            'cursor': 'pointer'
+                        }).html(`${booking.name}<br>${booking.room}`);
+                        cell1.on('click', function () {
+                            // Directly call cancelBooking without confirm prompt
+                            cancelBooking(booking.id, booking.name);
+                        });
+                    }
                     // Add click event listener for cell1
-                    cell1.on('click', function () {
-                        // Directly call cancelBooking without confirm prompt
-                        cancelBooking(booking.id, booking.name);
-                    });
+
                 } else {
                     cell1.addClass('py-3').css({
                         'border': '2px solid #fff',
@@ -602,18 +618,24 @@ $FacultyID = $userRow['faculty_Id'];
 
                 if (bookedSlots[slotKey2]) {
                     const booking = bookedSlots[slotKey2];
-                    cell2.addClass('py-3 booked-slot').css({
-                        'border': '2px solid #fff',
-                        'color': '#000',
-                        'background': '#f2b2b2',
-                        'cursor': 'pointer' // Indicate that the slot is clickable
-                    }).html(`${booking.name}<br>${booking.room}`);
-
-                    // Add click event listener for cell2
-                    cell2.on('click', function () {
-                        // Directly call cancelBooking without confirm prompt
-                        cancelBooking(booking.id, booking.name);
-                    });
+                    if (booking.evaluation_status == 1) {
+                        cell2.addClass('py-3 evaluated-slot').css({
+                            'border': '2px solid #fff',
+                            'color': '#000',
+                            'background-color': '#80deea'
+                        }).html(`${booking.name}<br> Evaluated`)
+                    } else {
+                        cell2.addClass('py-3 booked-slot').css({
+                            'border': '2px solid #fff',
+                            'color': '#000',
+                            'background': '#f2b2b2', // Color for regular booked slots
+                            'cursor': 'pointer'
+                        }).html(`${booking.name}<br>${booking.room}`);
+                        cell2.on('click', function () {
+                            // Directly call cancelBooking without confirm prompt
+                            cancelBooking(booking.id, booking.name);
+                        });
+                    }
                 } else {
                     cell2.addClass('py-3').css({
                         'border': '2px solid #fff',

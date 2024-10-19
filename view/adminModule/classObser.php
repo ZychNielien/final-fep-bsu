@@ -195,7 +195,11 @@ include "components/navBar.php";
                                                 $academic_year = $selectSAY['academic_year'];
 
                                                 ?>
-                                                <input type="hidden" id="slot-key">
+
+                                                <input type="hidden" id="slot-key" name="bookedSlot">
+                                                <input type="hidden" id="selectedDate" name="bookedSelectedDate">
+                                                <input type="hidden" id="startTime" name="bookedStartTime">
+                                                <input type="hidden" id="endTime" name="bookedEndTime">
                                                 <input type="hidden" name="fromFacultyID"
                                                     value="<?php echo $userRow["faculty_Id"]; ?>">
 
@@ -205,6 +209,8 @@ include "components/navBar.php";
                                                 <input type="hidden" name="academic_year"
                                                     value="<?php echo $selectSAY['academic_year']; ?>">
                                                 <input type="hidden" name="toFacultyID" id="toFacultyID">
+
+
                                                 <tr>
                                                     <th colspan="2" class="col-6" style="color: #000 !important;">
                                                         <div class="d-flex justify-content-between">
@@ -575,7 +581,7 @@ include "components/navBar.php";
         if ($preferredScheduleSQL_query && mysqli_num_rows($preferredScheduleSQL_query) > 0) {
             while ($preferredScheduleRow = mysqli_fetch_assoc($preferredScheduleSQL_query)) {
                 ?>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    {
                     name: "<?php echo $preferredScheduleRow['first_name'] . ' ' . $preferredScheduleRow['last_name'] ?>",
                     facultyIdPo: "<?php echo $preferredScheduleRow['faculty_Id'] ?>",
                     schedule: {
@@ -926,8 +932,11 @@ include "components/navBar.php";
                                 $('#booking-room').text(booking.room);
                                 $('#facultyInput').val(booking.name);
                                 $('#courseInput').val(booking.course);
-                                $('#slot-key').val(slotKey);
+                                $('#slot-key').val(booking.slot);
+                                $('#startTime').val(parseInt(booking.start_time));
+                                $('#endTime').val(parseInt(booking.end_time));
                                 $('#dateInput').val(formattedDateText);
+                                $('#selectedDate').val(booking.selected_date);
                                 $('#cancel-booking-btn').data('slotKey', slotKey);
                                 $('#bookingDetailsModal').modal('show');
                             } else {

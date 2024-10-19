@@ -292,6 +292,12 @@ if (!isset($_SESSION['studentSRCode'])) {
               $query_run = mysqli_query($con, $query);
 
               if (mysqli_num_rows($query_run) > 0) {
+
+                $isOpenSQL = "SELECT * FROM academic_year_semester WHERE id = 1";
+                $isOpenSQL_query = mysqli_query($con, $isOpenSQL);
+                $isOpenRow = mysqli_fetch_assoc($isOpenSQL_query);
+
+
                 while ($row = mysqli_fetch_assoc($query_run)) {
                   ?>
                   <tr>
@@ -310,18 +316,33 @@ if (!isset($_SESSION['studentSRCode'])) {
                       </td>
                       <?php
                     } ?>
-                    <?php if ($row['eval_status'] == 0) {
-                      ?>
-                      <td><button type="button" class="btn btn-success m-2 evaluate-btn" data-bs-toggle="modal"
-                          data-bs-target="#evaluationForm" data-id="<?php echo $row['faculty_id'] ?>"
-                          data-enrolled-id="<?php echo $row['id'] ?>" data-first-name="<?php echo $row['first_name'] ?>"
-                          data-last-name="<?php echo $row['last_name'] ?>" date-subject-id="<?php echo $row['subject_id'] ?>">
-                          Evaluate
-                        </button></td>
-                      <?php
+
+                    <?php
+
+                    if ($isOpenRow['isOpen'] == 1) {
+                      if ($row['eval_status'] == 0) {
+                        ?>
+
+                        <td><button type="button" class="btn btn-success m-2 evaluate-btn" data-bs-toggle="modal"
+                            data-bs-target="#evaluationForm" data-id="<?php echo $row['faculty_id'] ?>"
+                            data-enrolled-id="<?php echo $row['id'] ?>" data-first-name="<?php echo $row['first_name'] ?>"
+                            data-last-name="<?php echo $row['last_name'] ?>" date-subject-id="<?php echo $row['subject_id'] ?>">
+                            Evaluate
+                          </button></td>
+                        <?php
+                      } else {
+                        ?>
+
+                        <td>
+                          <button class="btn btn-secondary" disabled>Evaluated</button>
+                        </td>
+                        <?php
+                      }
                     } else {
                       ?>
-                      <td><button class="btn btn-secondary" disabled>Evaluated</button></td>
+                      <td>
+                        <span>Evaluation for Faculty Development is still closed.</span>
+                      </td>
                       <?php
                     } ?>
 
@@ -357,9 +378,8 @@ if (!isset($_SESSION['studentSRCode'])) {
       <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header  bg-danger text-white">
-            <h5 class="modal-title text-center text-white" id="exampleModalLabel">FACULTY
-              PEER TO PEER EVALUATION INSTRUMENT
-              FOR FACULTY DEVELOPMENT</h5>
+            <h5 class="modal-title text-center text-white" id="exampleModalLabel">PERFORMANCE EVALUATION INSTRUMENT FOR
+              FACULTY DEVELOPMENT</h5>
             <button type="button" class="btn-close bg-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
@@ -484,7 +504,7 @@ if (!isset($_SESSION['studentSRCode'])) {
                 </div>
 
                 <!-- HIDDEN INPUTS -->
-                <div style="display: none;">
+                <div style="display: noe;">
                   <input type="text" name="fromStudents" value="">
                   <input type="text" id="facultyID" name="toFacultyID">
                   <input type="date" id="dateInput" name="date" required>
@@ -713,10 +733,11 @@ if (!isset($_SESSION['studentSRCode'])) {
           <div>
             <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i
                 class="fa-regular fa-circle-xmark"></i> Close</button>
-            </div>
-            <div>
-              <button type="submit" id="submitMajor" name="submitMajor" class="btn btn-success"><i class="fa-solid fa-floppy-disk"></i> Submit</button>
-            </div>
+          </div>
+          <div>
+            <button type="submit" id="submitMajor" name="submitMajor" class="btn btn-success"><i
+                class="fa-solid fa-floppy-disk"></i> Submit</button>
+          </div>
           </form>
         </div>
       </div>

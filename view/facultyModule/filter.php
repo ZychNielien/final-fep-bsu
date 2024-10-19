@@ -38,7 +38,7 @@ function getVerbalInterpretationAndLinks($averageRating, $categories, $selectedS
         ];
     }
 
-    $sql = "SELECT linkOne, linkTwo, linkThree FROM subject WHERE subject_code = ?";
+    $sql = "SELECT linkOne, linkTwo, linkThree FROM subject WHERE subject = ?";
     $stmt = mysqli_prepare($con, $sql);
     mysqli_stmt_bind_param($stmt, 's', $selectedSubject);
     mysqli_stmt_execute($stmt);
@@ -107,7 +107,7 @@ $sqlSubject = "
         s.linkThree
     FROM studentsform cq
     JOIN instructor i ON cq.toFacultyID = i.faculty_Id
-    JOIN subject s ON cq.subject = s.subject_code
+    JOIN subject s ON cq.subject = s.subject
     WHERE cq.toFacultyID = '$FacultyID'
 ";
 

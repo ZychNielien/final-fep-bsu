@@ -107,7 +107,7 @@ $sqlSubject = "
         s.linkThree
     FROM studentsform cq
     JOIN instructor i ON cq.toFacultyID = i.faculty_Id
-    JOIN subject s ON cq.subject = s.subject_code
+    JOIN subject s ON cq.subject = s.subject
     WHERE cq.toFacultyID = '$FacultyID'
 ";
 
