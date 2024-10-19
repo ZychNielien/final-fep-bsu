@@ -58,6 +58,7 @@ $(document).ready(function () {
 
   if(year == 'THIRD' && semester == 'FIRST' && getMajor == 0){
     $('#major').css('display', 'flex');
+    $("#usermajor2").css("display", "none");
     Swal.fire({
       title: "Choose your Major",
       text: "You need to choose your Major",
@@ -67,8 +68,9 @@ $(document).ready(function () {
       cancelButtonColor: "#d33",
       showConfirmButton: false,
     });
-  } else {
+  } else if(getMajor == 0){
     $("#major").css("display", "none");
+    $("#usermajor2").css("display", "none");
   }
 
   $.ajax({
@@ -141,6 +143,10 @@ $(document).ready(function () {
       });
     },
   });
+
+  if(year == 'THIRD' || year == 'FOURTH'){
+    console.log('hello');
+  }
 
   //enrollment part to
   $("#enroll-table tbody").on("click", ".enroll-now", function () {
