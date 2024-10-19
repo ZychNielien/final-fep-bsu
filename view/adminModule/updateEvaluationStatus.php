@@ -10,15 +10,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updates'])) {
 
     foreach ($updates as $update) {
         $timeSlotKey = $update['timeSlotKey'];
-        $evaluationStatus = 1; // Always set evaluation_status to 1
+        $evaluationStatus = 1;
 
-        // Prepare and execute the update statement
         $stmt = $conn->prepare("UPDATE bookings SET evaluation_status = ? WHERE timeSlotKey = ?");
         $stmt->bind_param("is", $evaluationStatus, $timeSlotKey);
         $stmt->execute();
     }
 
-    // Close the connection
     $conn->close();
     echo json_encode(['status' => 'success']);
 } else {

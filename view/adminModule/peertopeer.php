@@ -328,7 +328,6 @@ include "components/navBar.php"
         printWindow.focus();
         printWindow.print();
 
-        // Close the print window after printing
         printWindow.close();
     }
 

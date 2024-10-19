@@ -14,8 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $selectedDate = $_POST['selectedDate'];
     $startTime = $_POST['startTime'];
     $endTime = $_POST['endTime'];
-    $evaluationStatus = 0; // Default status
-    $isEvaluated = false; // Default evaluated status
+    $evaluationStatus = 0;
+    $isEvaluated = false;
 
     $stmt = $conn->prepare("INSERT INTO bookings (name, course, room, selected_date, start_time, end_time, evaluation_status,slot,faculty_Id) VALUES (?, ?, ?, ?, ?, ?,?, ?,?)");
     $stmt->bind_param("ssssssssi", $name, $subject, $room, $selectedDate, $startTime, $endTime, $evaluationStatus, $slot, $idPO);

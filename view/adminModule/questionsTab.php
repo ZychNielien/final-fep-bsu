@@ -566,9 +566,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentaction'])) {
                                 <option value="" disabled>Select Academic Year</option>
                                 <?php
                                 $currentYear = date("Y");
-                                $nextYear = $currentYear + 3; // Extend five years into the future
-                                
-                                // Generate future academic year options
+                                $nextYear = $currentYear + 3;
+
                                 for ($year = $currentYear; $year <= $nextYear; $year++) {
                                     echo "<option value='$year-" . ($year + 1) . "'>$year - " . ($year + 1) . "</option>";
                                 }
@@ -1080,7 +1079,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentaction'])) {
                             <div class="form-group p-2 mb-2">
                                 <label for="link" class="form-label">Paste link Three here:</label>
                                 <textarea class="form-control" id="linkThree" name="linkThree" rows="3"></textarea>
-                                <!-- Change this to 'linkThree' -->
                             </div>
                         </div>
                         <div class="modal-footer">

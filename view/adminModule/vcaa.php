@@ -96,7 +96,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['excel_file'])) {
     }
 }
 
-// End output buffering and send the buffered output
 
 $average = isset($average) ? $average : 0;
 ob_end_flush();
@@ -517,27 +516,23 @@ ob_end_flush();
             $('#facultyIdField').val(facultyID);
             $('#facultyNameField').text(facultyName);
 
-            // Call fetchFilteredResults after setting the facultyID
             fetchFilteredResults();
         });
 
         $(document).on('click', '.viewstudentEvaluation-btn', function () {
-            var facultyIDstudent = $(this).data('idstudent'); // Get the faculty ID
-            var facultyNamestudent = $(this).data('namestudent'); // Get the faculty name
+            var facultyIDstudent = $(this).data('idstudent');
+            var facultyNamestudent = $(this).data('namestudent');
 
-            $('#facultyIdFieldstudent').val(facultyIDstudent); // Store the faculty ID in the hidden input
-            $('#facultyNameFieldstudent').text(facultyNamestudent); // Populate the modal with the faculty name
+            $('#facultyIdFieldstudent').val(facultyIDstudent);
+            $('#facultyNameFieldstudent').text(facultyNamestudent);
 
-            // Call fetchFilteredResults after setting the facultyID
             fetchFilteredStudentResults();
         });
 
-
-        // Call fetchFilteredResults automatically on page load or when filtering
         function fetchFilteredResults() {
             var semester = $('#semester').val();
             var academicYear = $('#academic_year').val();
-            var facultyID = $('#facultyIdField').val(); // Get the stored faculty ID from the hidden field
+            var facultyID = $('#facultyIdField').val();
 
             if (semester === '' && academicYear === '') {
                 $.ajax({
@@ -545,10 +540,10 @@ ob_end_flush();
                     url: 'filterpeertopeerResults.php',
                     data: {
                         fetchAll: true,
-                        facultyID: facultyID // Automatically include facultyID
+                        facultyID: facultyID
                     },
                     success: function (data) {
-                        $('#result').html(data); // Update the results
+                        $('#result').html(data);
                     },
                 });
             } else {
@@ -558,10 +553,10 @@ ob_end_flush();
                     data: {
                         semester: semester,
                         academic_year: academicYear,
-                        facultyID: facultyID // Automatically include facultyID
+                        facultyID: facultyID
                     },
                     success: function (data) {
-                        $('#result').html(data); // Update the results
+                        $('#result').html(data);
                     },
                 });
             }
@@ -570,7 +565,7 @@ ob_end_flush();
         function fetchFilteredStudentResults() {
             var semester = $('#semester').val();
             var academicYear = $('#academic_year').val();
-            var facultyID = $('#facultyIdFieldstudent').val(); // Get the stored faculty ID from the hidden field
+            var facultyID = $('#facultyIdFieldstudent').val();
 
             if (semester === '' && academicYear === '') {
                 $.ajax({
@@ -578,10 +573,10 @@ ob_end_flush();
                     url: 'filterStudentResults.php',
                     data: {
                         fetchAll: true,
-                        facultyID: facultyID // Automatically include facultyID
+                        facultyID: facultyID
                     },
                     success: function (data) {
-                        $('#resultStudent').html(data); // Update the results
+                        $('#resultStudent').html(data);
                     },
                 });
             } else {
@@ -591,10 +586,10 @@ ob_end_flush();
                     data: {
                         semester: semester,
                         academic_year: academicYear,
-                        facultyID: facultyID // Automatically include facultyID
+                        facultyID: facultyID
                     },
                     success: function (data) {
-                        $('#resultStudent').html(data); // Update the results
+                        $('#resultStudent').html(data);
                     },
                 });
             }
