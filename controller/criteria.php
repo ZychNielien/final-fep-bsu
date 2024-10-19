@@ -754,10 +754,11 @@ if (isset($_POST['studentSubmit'])) {
     $comment = isset($_POST['comment']) ? trim($_POST['comment']) : '';
     $enrolled = isset($_POST['enrolled']) ? trim($_POST['enrolled']) : '';
     $subject = isset($_POST['subject']) ? trim($_POST['subject']) : '';
+    $srcode = isset($_POST['srcode']) ? trim($_POST['srcode']) : '';
 
     foreach ($_POST as $key => $value) {
 
-        if ($key !== 'studentSubmit' && $key !== 'toFaculty' && $key !== 'toFacultyID' && $key !== 'fromStudents' && $key !== 'fromStudentID' && $key !== 'semester' && $key !== 'academic_year' && $key !== 'date' && $key !== 'comment' && $key !== 'enrolled' && $key !== 'subject') { // Exclude these keys
+        if ($key !== 'studentSubmit' && $key !== 'toFaculty' && $key !== 'toFacultyID' && $key !== 'fromStudents' && $key !== 'fromStudentID' && $key !== 'semester' && $key !== 'academic_year' && $key !== 'date' && $key !== 'comment' && $key !== 'enrolled' && $key !== 'subject' && $key !== 'srcode') { // Exclude these keys
 
             $cleanKey = str_replace('_', '', trim($key));
             $cleanValue = trim($value);
@@ -781,10 +782,20 @@ if (isset($_POST['studentSubmit'])) {
             $SQLUpdate_query = mysqli_query($con, $SQLUpdate);
 
             if ($SQLUpdate_query) {
-                $_SESSION['status'] = "Evaluation Completed Successfully";
-                $_SESSION['status-code'] = "success";
-                header('location:../view/student_view.php');
-                exit;
+
+                $query_complete = "INSERT INTO complete_subject (subject_id, faculty_id, sr_code, section_id) 
+                                        VALUES 
+                                    ((SELECT subject_id FROM subject WHERE subject = '$subject'), '$toFacultyID', '$srcode',
+                                    (SELECT section_id FROM `enrolled_student` WHERE sr_code = '$srcode' AND subject_id = (SELECT subject_id FROM subject WHERE subject = '$subject')))";
+                                    
+                $query_complete_run = mysqli_query($con, $query_complete);
+
+                    if($query_complete_run){
+                        $_SESSION['status'] = "Evaluation Completed Successfully";
+                        $_SESSION['status-code'] = "success";
+                        header('location:../view/student_view.php');
+                        exit;
+                    }
             }
 
 

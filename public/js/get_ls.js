@@ -71,6 +71,8 @@ $(document).ready(function () {
   } else if(getMajor == 0){
     $("#major").css("display", "none");
     $("#usermajor2").css("display", "none");
+  }else{
+    $("#major").css("display", "none");
   }
 
   $.ajax({
@@ -145,7 +147,13 @@ $(document).ready(function () {
   });
 
   if(year == 'THIRD' || year == 'FOURTH'){
-    console.log('hello');
+    if(getMajor == 'Service Management'){
+      console.log('SM');
+    }else if(getMajor == 'Business Analytics'){
+      console.log('BA');
+    }else if(getMajor == 'Network Technology'){
+      console.log('NT');
+    }
   }
 
   //enrollment part to

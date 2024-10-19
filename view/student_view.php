@@ -572,6 +572,7 @@ if (!isset($_SESSION['studentSRCode'])) {
                   <input type="date" id="dateInput" name="date" required>
                   <input type="text" id="enroll" name="enrolled">
                   <input type="text" id="subjectID" name="subject">
+                  <input type="text" name="srcode" value="<?php echo $_SESSION['studentSRCode'] ?>">
                 </div>
 
                 <?php
