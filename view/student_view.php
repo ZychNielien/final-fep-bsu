@@ -387,7 +387,6 @@ if (!isset($_SESSION['studentSRCode'])) {
               <th>Subject</th>
               <th>Instructor</th>
               <th>Section</th>
-              <th>Action</th>
             </thead>
             <tbody>
 
@@ -405,7 +404,6 @@ if (!isset($_SESSION['studentSRCode'])) {
                   <td><?php echo $row['subject'] ?></td>
                   <td><?php echo $row['last_name'] ?>, <?php echo $row['first_name'] ?></td>
                   <td><?php echo $row['section'] ?></td>
-                  <td><button class="btn btn-success">button</button></td>
                 </tr>
                 
                 <?php
@@ -413,7 +411,7 @@ if (!isset($_SESSION['studentSRCode'])) {
               } else {
                 ?>
                 <tr>
-                  <td colspan="4">No Enrolled Subject!</td>
+                  <td colspan="4">No Complete Subject!</td>
                 </tr>
                 <?php
               }
