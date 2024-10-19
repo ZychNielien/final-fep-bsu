@@ -5,6 +5,7 @@ if (isset($_GET['year_level'])) {
     $yearlvl = $_GET['year_level'];
     $srcode = $_GET['srcode'];
     $sem = $_GET['semester'];
+    $major = $_GET['major'];
 
     $query = "WITH sec_count AS (
                         SELECT 
@@ -72,7 +73,7 @@ if (isset($_GET['year_level'])) {
                                 FROM complete_subject 
                                 WHERE sr_code = '$srcode'
                             )
-                        )
+                        ) AND (S.major IS NULL OR S.major = '$major')
                     UNION ALL
                     SELECT 
                         A.id, 

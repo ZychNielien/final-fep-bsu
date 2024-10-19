@@ -1,6 +1,7 @@
 $(document).ready(function () {
   $("#studentLogin").on("click", function () {
     var studentSRCode = $("#studentSRCode").val();
+
     $.ajax({
       url: "controller/localStorage.php",
       type: "GET",

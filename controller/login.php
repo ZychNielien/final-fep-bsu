@@ -29,7 +29,7 @@ if (isset($_POST['studentLogin'])) {
         } else {
             $_SESSION['status'] = "Authentication Failed";
             $_SESSION['status-code'] = "error";
-            header("location: index.php");
+            header("location: ../index.php");
         }
     } else {
         die(mysqli_error($con));

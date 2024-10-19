@@ -137,7 +137,7 @@ if(isset($_POST['submitMajor'])){
     if ($query_run) {
         $_SESSION['status'] = $major. " has been selected, please Login Again";
         $_SESSION['status-code'] = "success";
-        header('location:../view/loginModule/index.php');
+        header('location: ../index.php');
         session_destroy();
     } else {
         $_SESSION['status'] = "Something is wrong";
