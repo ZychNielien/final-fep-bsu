@@ -65,7 +65,7 @@ if (isset($_POST['facultyadmin'])) {
         } else {
             $_SESSION['status'] = "Authentication Failed";
             $_SESSION['status-code'] = "error";
-            header("location: ../view/loginModule/index.php");
+            header("location: ../index.php");
         }
     } else {
         die(mysqli_error($con));
