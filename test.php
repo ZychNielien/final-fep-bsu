@@ -8,7 +8,7 @@
 <script>
     function fetchAverageRatings() {
         $.ajax({
-            url: 'peerToPeerGraph.php', // Your PHP file to fetch data
+            url: '.php', // Your PHP file to fetch data
             type: 'POST',
             data: {
                 semester: $('#semesterSelect').val(), // Assuming you have a select for semester
