@@ -367,7 +367,7 @@ $semestersJson = json_encode($semesters);
 
                 </div>
 
-                <canvas id="lineChart"></canvas>
+                <canvas id="barChart"></canvas>
 
             </div>
 
@@ -452,7 +452,8 @@ $semestersJson = json_encode($semesters);
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
 
-    <script>        function printPartOfPage(elementId) {
+    <script>
+        function printPartOfPage(elementId) {
             var printContent = document.getElementById(elementId);
             var windowUrl = 'about:blank';
             var uniqueName = new Date();
@@ -637,15 +638,14 @@ $semestersJson = json_encode($semesters);
                     return {
                         label: subject,
                         data: cleanData,
-                        borderColor: colorPalette[index % colorPalette.length],
                         backgroundColor: colorPalette[index % colorPalette.length],
-                        fill: false,
-                        tension: 0.1
+                        borderColor: colorPalette[index % colorPalette.length],
+                        borderWidth: 1
                     };
                 });
         }
 
-        function updateChart() {
+        function updateCharts() {
             const selectedSubject = document.getElementById('subjectFilter').value;
 
             const startSemester = document.getElementById('startSemesterFilter').value;
@@ -658,30 +658,32 @@ $semestersJson = json_encode($semesters);
 
             const datasets = createFilteredDatasets(selectedSubject);
 
-            lineChart.data.labels = filteredLabels;
-            lineChart.data.datasets = datasets;
-            lineChart.update();
+            // Update Bar Chart
+            barChart.data.labels = filteredLabels;
+            barChart.data.datasets = datasets.map(dataset => ({
+                ...dataset,
+                type: 'bar', // Set type to 'bar' for the bar chart
+            }));
+            barChart.update();
         }
-
 
         document.getElementById('startSemesterFilter').addEventListener('change', () => {
             filterEndSemesters();
-            updateChart();
+            updateCharts();
         });
 
-        document.getElementById('subjectFilter').addEventListener('change', function () {
-            const selectedSubject = this.value;
-            updateChart();
-        });
+        document.getElementById('subjectFilter').addEventListener('change', updateCharts);
+        document.getElementById('endSemesterFilter').addEventListener('change', updateCharts);
 
-        document.getElementById('endSemesterFilter').addEventListener('change', updateChart);
-
-        const ctxLine = document.getElementById('lineChart').getContext('2d');
-        const lineChart = new Chart(ctxLine, {
-            type: 'line',
+        const ctxBar = document.getElementById('barChart').getContext('2d');
+        const barChart = new Chart(ctxBar, {
+            type: 'bar', // Specify the chart type as 'bar'
             data: {
                 labels: semesters,
-                datasets: createFilteredDatasets('all')
+                datasets: createFilteredDatasets('all').map(dataset => ({
+                    ...dataset,
+                    type: 'bar', // Set type to 'bar' for the bar chart
+                }))
             },
             options: {
                 scales: {
@@ -696,9 +698,9 @@ $semestersJson = json_encode($semesters);
         document.getElementById('startSemesterFilter').value = semesters[0];
         filterEndSemesters();
         document.getElementById('endSemesterFilter').value = semesters[semesters.length - 1];
-        updateChart();
-
+        updateCharts();
     </script>
+
 
     <script src="../../bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="../../public/js/sweetalert2@11.js"></script>

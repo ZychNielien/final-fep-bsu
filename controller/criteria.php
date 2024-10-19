@@ -691,41 +691,38 @@ if (isset($_POST['classroomObservationSubmit'])) {
             $types = str_repeat('s', count($values));
             mysqli_stmt_bind_param($stmt, $types, ...$values);
 
-            if (mysqli_stmt_execute($stmt)) {
 
-                if (mysqli_stmt_execute($stmt)) {
-                    // Successful insertion, now update bookings
-                    $update_SQL = "UPDATE `bookings` 
+
+            if (mysqli_stmt_execute($stmt)) {
+                // Successful insertion, now update bookings
+                $update_SQL = "UPDATE `bookings` 
                                    SET evaluation_status = 1 
                                    WHERE faculty_Id = ? AND course = ? AND slot = ? AND selected_date = ? AND start_time = ? AND end_time = ?";
 
-                    if ($update_stmt = mysqli_prepare($con, $update_SQL)) {
-                        // Bind parameters for the update
-                        mysqli_stmt_bind_param($update_stmt, 'isssss', $toFacultyID, $courseTitle, $bookedSlot, $bookedSelectedDate, $bookedStartTime, $bookedEndTime);
+                if ($update_stmt = mysqli_prepare($con, $update_SQL)) {
+                    // Bind parameters for the update
+                    mysqli_stmt_bind_param($update_stmt, 'isssss', $toFacultyID, $courseTitle, $bookedSlot, $bookedSelectedDate, $bookedStartTime, $bookedEndTime);
 
-                        if (mysqli_stmt_execute($update_stmt)) {
-                            $_SESSION['status'] = "Classroom Observation Completed Successfully";
-                            $_SESSION['status-code'] = "success";
-                            header('location:../view/adminModule/classObser.php');
-                        } else {
-                            $_SESSION['status'] = "Error updating classroom observation status: " . mysqli_stmt_error($update_stmt);
-                            $_SESSION['status-code'] = "error";
-                        }
-                        mysqli_stmt_close($update_stmt);
+                    if (mysqli_stmt_execute($update_stmt)) {
+                        $_SESSION['status'] = "Classroom Observation Completed Successfully";
+                        $_SESSION['status-code'] = "success";
+                        header('location:../view/adminModule/classObser.php');
                     } else {
-                        $_SESSION['status'] = "Error preparing update statement: " . mysqli_error($con);
+                        $_SESSION['status'] = "Error updating classroom observation status: " . mysqli_stmt_error($update_stmt);
                         $_SESSION['status-code'] = "error";
                     }
+                    mysqli_stmt_close($update_stmt);
                 } else {
-                    $_SESSION['status'] = "Error Classroom Observation: " . mysqli_stmt_error($stmt);
+                    $_SESSION['status'] = "Error preparing update statement: " . mysqli_error($con);
                     $_SESSION['status-code'] = "error";
                 }
-
-                exit;
             } else {
-                $_SESSION['status'] = "Error Classroom Observation : " . mysqli_error($con);
+                $_SESSION['status'] = "Error Classroom Observation: " . mysqli_stmt_error($stmt);
                 $_SESSION['status-code'] = "error";
             }
+
+            exit;
+
 
             mysqli_stmt_close($stmt);
         } else {
@@ -787,15 +784,15 @@ if (isset($_POST['studentSubmit'])) {
                                         VALUES 
                                     ((SELECT subject_id FROM subject WHERE subject = '$subject'), '$toFacultyID', '$srcode',
                                     (SELECT section_id FROM `enrolled_student` WHERE sr_code = '$srcode' AND subject_id = (SELECT subject_id FROM subject WHERE subject = '$subject')))";
-                                    
+
                 $query_complete_run = mysqli_query($con, $query_complete);
 
-                    if($query_complete_run){
-                        $_SESSION['status'] = "Evaluation Completed Successfully";
-                        $_SESSION['status-code'] = "success";
-                        header('location:../view/student_view.php');
-                        exit;
-                    }
+                if ($query_complete_run) {
+                    $_SESSION['status'] = "Evaluation Completed Successfully";
+                    $_SESSION['status-code'] = "success";
+                    header('location:../view/student_view.php');
+                    exit;
+                }
             }
 
 
