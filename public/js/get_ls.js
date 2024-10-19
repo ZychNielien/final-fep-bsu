@@ -8,6 +8,9 @@ $(document).ready(function () {
   var semester = studentData[0].semester;
   var srcode = studentData[0].sr_code;
   var getMajor = studentData[0].major;
+  var getYear = studentData[0].year_id;
+  var GetSemester = studentData[0].sem_id;
+
 
   $("#lastname").text(lastname);
   $("#firstname").text(firstname);
@@ -150,11 +153,26 @@ $(document).ready(function () {
     },
   });
 
-  if(semester == 'FIRST') {
-    console.log('update semester');
-  }else if(semester == 'SECOND') {
-    console.log('updatte year and semester');
-  }
+//UPDATE YEAR AND SEM
+  // if(semester == 'FIRST') {
+  //   $.ajax({
+  //     url: '../controller/updateSem.php',
+  //     type: 'GET',
+  //     data: {srcode: srcode, sem: GetSemester},
+  //     success: function(data){
+  //       console.log(data);
+  //     }
+  //   });
+  // }else if(semester == 'SECOND') {
+  //   $.ajax({
+  //     url: '../controller/updateYear.php',
+  //     type: 'GET',
+  //     data: {srcode: srcode, year: getYear, sem: GetSemester},
+  //     success: function(data){
+  //       console.log(data);
+  //     }
+  //   });
+  // }
 
   //enrollment part to
   $("#enroll-table tbody").on("click", ".enroll-now", function () {
