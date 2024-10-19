@@ -504,7 +504,7 @@ if (!isset($_SESSION['studentSRCode'])) {
                   <table class="table table-striped table-bordered text-center align-middle">
 
                     <thead>
-                      <tr class="bg-danger text-uppercase">
+                      <tr class="bg-danger text-light text-uppercase">
                         <th class="align-middle text-center">Numerical
                           Rating</th>
                         <th class="align-middle text-center">Descriptive
@@ -566,7 +566,7 @@ if (!isset($_SESSION['studentSRCode'])) {
                 </div>
 
                 <!-- HIDDEN INPUTS -->
-                <div style="display: noe;">
+                <div style="display: none;">
                   <input type="text" name="fromStudents" value="">
                   <input type="text" id="facultyID" name="toFacultyID">
                   <input type="date" id="dateInput" name="date" required>
