@@ -177,57 +177,279 @@ ob_end_flush();
     }
 </style>
 <section class="contentContainer">
-    <div class="container">
-        <table class="table table-striped table-bordered text-center align-middle w-100">
-            <thead>
-                <tr class="bg-danger">
-                    <th>Full Name</th>
-                    <th>VCAA Rating</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-
-                $sql = "SELECT * FROM `instructor`";
-                $sql_query = mysqli_query($con, $sql);
-                if ($sql_query) {
-                    while ($vcaaRow = mysqli_fetch_assoc($sql_query)) {
-                        $facultyID = $vcaaRow['faculty_Id'];
-
-                        $getVCAA = "SELECT * FROM `vcaaexcel` WHERE faculty_Id = '$facultyID'";
-                        $getVCAA_query = mysqli_query($con, $getVCAA);
-                        $vcaaValue = mysqli_fetch_assoc($getVCAA_query);
-
-                        $displayRating = isset($vcaaValue['cell_value']) && !is_null($vcaaValue['cell_value'])
-                            ? $vcaaValue['cell_value']
-                            : 'No VCAA rating';
-                        ?>
 
 
-                        <tr>
-                            <td><?php echo $vcaaRow['first_name'] . ' ' . $vcaaRow['last_name'] ?></td>
-                            <td><?php echo $displayRating; ?></td>
-                            <td> <button class="btn btn-primary edit-vcaa-btn" data-bs-toggle="modal"
-                                    data-bs-target="#exampleModal" data-id="<?php echo $vcaaRow['faculty_Id']; ?>"
-                                    data-average="<?php echo isset($vcaaValue['cell_value']) ? $vcaaValue['cell_value'] : 0; ?>"
-                                    data-name="<?php echo $vcaaRow['first_name'] . ' ' . $vcaaRow['last_name']; ?>">Update</button>
-                            </td>
+    <nav>
+        <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
+            <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home"
+                type="button" role="tab" aria-controls="nav-home" aria-selected="true">Peer to Peer
+                Evaluation Result</button>
+            <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile"
+                type="button" role="tab" aria-controls="nav-profile" aria-selected="false">Faculty VCAA</button>
+        </div>
+    </nav>
+
+    <!-- CONTENT OF A TAB LIST -->
+    <div class="tab-content p-3 border overflow-auto" id="nav-tabContent">
+
+        <!-- TAB LIST FIRST TAB -->
+        <div class="tab-pane fade active show" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+
+            <div class="container">
+                <table class="table table-striped table-bordered text-center align-middle w-100">
+                    <thead>
+                        <tr class="bg-danger">
+                            <th>FACULTY</th>
+                            <th>PEER TO PEER EVALUATION</th>
+                            <th>FACULTY DEVELOPMENT EVALUATION</th>
                         </tr>
-
+                    </thead>
+                    <tbody>
                         <?php
 
+                        $sql = "SELECT * FROM `instructor`";
+                        $sql_query = mysqli_query($con, $sql);
+                        if ($sql_query) {
+                            while ($instructor = mysqli_fetch_assoc($sql_query)) {
+                                $facultyID = $instructor['faculty_Id'];
 
-                    }
-                }
+                                $peerToPeer = "SELECT * FROM `peertopeerform` WHERE toFacultyID = '$facultyID'";
+                                $peertopeer_query = mysqli_query($con, $peerToPeer);
+                                $peerToPeerRow = mysqli_fetch_assoc($peertopeer_query);
 
-                ?>
-            </tbody>
-        </table>
+                                ?>
+                                <tr>
+                                    <td><?php echo $instructor['first_name'] . ' ' . $instructor['last_name'] ?></td>
+                                    <td> <button class="btn btn-success viewPeertoPeer-btn" data-bs-toggle="modal"
+                                            data-bs-target="#peertopeer" data-id="<?php echo $instructor['faculty_Id']; ?>"
+                                            data-name="<?php echo $instructor['first_name'] . ' ' . $instructor['last_name'] ?>">View
+                                            Results
+                                        </button>
+                                    </td>
+                                    <td><button class="btn btn-success viewstudentEvaluation-btn" data-bs-toggle="modal"
+                                            data-bs-target="#studentEvaluation"
+                                            data-idstudent="<?php echo $instructor['faculty_Id']; ?>"
+                                            data-namestudent="<?php echo $instructor['first_name'] . ' ' . $instructor['last_name']; ?>">
+                                            View Results
+                                        </button>
+
+                                    </td>
+                                </tr>
+                                <?php
+                            }
+                        }
+
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB LIST SECOND TAB -->
+        <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
 
 
+            <div class="container">
+                <table class="table table-striped table-bordered text-center align-middle w-100">
+                    <thead>
+                        <tr class="bg-danger">
+                            <th>Full Name</th>
+                            <th>VCAA Rating</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+
+                        $sql = "SELECT * FROM `instructor`";
+                        $sql_query = mysqli_query($con, $sql);
+                        if ($sql_query) {
+                            while ($vcaaRow = mysqli_fetch_assoc($sql_query)) {
+                                $facultyID = $vcaaRow['faculty_Id'];
+
+                                $getVCAA = "SELECT * FROM `vcaaexcel` WHERE faculty_Id = '$facultyID'";
+                                $getVCAA_query = mysqli_query($con, $getVCAA);
+                                $vcaaValue = mysqli_fetch_assoc($getVCAA_query);
+
+                                $displayRating = isset($vcaaValue['cell_value']) && !is_null($vcaaValue['cell_value'])
+                                    ? $vcaaValue['cell_value']
+                                    : 'No VCAA rating';
+                                ?>
+
+
+                                <tr>
+                                    <td><?php echo $vcaaRow['first_name'] . ' ' . $vcaaRow['last_name'] ?></td>
+                                    <td><?php echo $displayRating; ?></td>
+                                    <td> <button class="btn btn-primary edit-vcaa-btn" data-bs-toggle="modal"
+                                            data-bs-target="#exampleModal" data-id="<?php echo $vcaaRow['faculty_Id']; ?>"
+                                            data-average="<?php echo isset($vcaaValue['cell_value']) ? $vcaaValue['cell_value'] : 0; ?>"
+                                            data-name="<?php echo $vcaaRow['first_name'] . ' ' . $vcaaRow['last_name']; ?>">Update</button>
+                                    </td>
+                                </tr>
+
+                                <?php
+
+
+                            }
+                        }
+
+                        ?>
+                    </tbody>
+                </table>
+
+
+
+            </div>
+
+        </div>
 
     </div>
+
+    <!-- Peer to Peer Evaluation Results -->
+    <div class="modal fade" id="peertopeer" tabindex="-1" aria-labelledby="peertopeerLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="peertopeerLabel">Peer to Peer Evaluation Results of <span
+                            id="facultyNameField" class="fw-bold"></span></h5>
+                    <button type="button" class="btn-close bg-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="ulo d-flex flex-column">
+                        <?php
+                        $sqlSAY = "SELECT DISTINCT sf.semester, sf.academic_year
+                    FROM peertopeerform sf
+                    JOIN instructor i ON sf.toFacultyID = i.faculty_Id";
+
+                        $sqlSAY_query = mysqli_query($con, $sqlSAY);
+
+                        $semesters = [];
+                        $academicYears = [];
+
+                        while ($academicYearSemester = mysqli_fetch_assoc($sqlSAY_query)) {
+                            $semesters[] = $academicYearSemester['semester'];
+                            $academicYears[] = $academicYearSemester['academic_year'];
+                        }
+
+                        $selectedSemester = isset($_POST['semester']) ? $_POST['semester'] : '';
+                        $selectedAcademicYear = isset($_POST['academic_year']) ? $_POST['academic_year'] : '';
+
+                        ?>
+
+                        <!-- FILTER FOR SEMESTER AND ACADEMIC YEAR -->
+                        <form method="POST" action=""
+                            class="mb-4 d-flex justify-content-evenly align-items-center text-center">
+                            <div class="mb-3">
+                                <label for="academic_year" class="form-label">Academic Year:</label>
+                                <select id="academic_year" name="academic_year" class="form-select">
+                                    <option value="">Select Academic Year</option>
+                                    <?php foreach (array_unique($academicYears) as $year): ?>
+                                        <option value="<?php echo $year; ?>"><?php echo $year; ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="semester" class="form-label">Semester:</label>
+                                <select id="semester" name="semester" class="form-select">
+                                    <option value="">Select Semester</option>
+                                    <?php foreach (array_unique($semesters) as $semester): ?>
+                                        <option value="<?php echo $semester; ?>"><?php echo $semester; ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </form>
+
+
+                        <input type="hidden" id="facultyIdField" name="facultyIdField">
+                        <div class="overflow-auto" style="max-height: 520px; width: 1000px;">
+                            <!-- RESULT OF DATA FROM THE STUDENTS EVALUATION -->
+                            <div id="result"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student's Evaluation Results -->
+    <div class="modal fade" id="studentEvaluation" tabindex="-1" aria-labelledby="studentEvaluationLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="studentEvaluationLabel">Faculty Development Evaluation Result of <span
+                            id="facultyNameFieldstudent" class="fw-bold"></span></h5>
+                    <button type="button" class="btn-close bg-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="ulo d-flex flex-column">
+                        <?php
+                        $sqlSAY = "SELECT DISTINCT sf.semester, sf.academic_year
+                    FROM studentsform sf
+                    JOIN instructor i ON sf.toFacultyID = i.faculty_Id";
+
+                        $sqlSAY_query = mysqli_query($con, $sqlSAY);
+
+                        $semesters = [];
+                        $academicYears = [];
+
+                        while ($academicYearSemester = mysqli_fetch_assoc($sqlSAY_query)) {
+                            $semesters[] = $academicYearSemester['semester'];
+                            $academicYears[] = $academicYearSemester['academic_year'];
+                        }
+
+                        $selectedSemester = isset($_POST['semester']) ? $_POST['semester'] : '';
+                        $selectedAcademicYear = isset($_POST['academic_year']) ? $_POST['academic_year'] : '';
+
+                        ?>
+
+                        <!-- FILTER FOR SEMESTER AND ACADEMIC YEAR -->
+                        <form method="POST" action=""
+                            class="mb-4 d-flex justify-content-evenly align-items-center text-center">
+                            <div class="mb-3">
+                                <label for="academic_year" class="form-label">Academic Year:</label>
+                                <select id="academic_year" name="academic_year" class="form-select">
+                                    <option value="">Select Academic Year</option>
+                                    <?php foreach (array_unique($academicYears) as $year): ?>
+                                        <option value="<?php echo $year; ?>"><?php echo $year; ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="semester" class="form-label">Semester:</label>
+                                <select id="semester" name="semester" class="form-select">
+                                    <option value="">Select Semester</option>
+                                    <?php foreach (array_unique($semesters) as $semester): ?>
+                                        <option value="<?php echo $semester; ?>"><?php echo $semester; ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </form>
+
+
+                        <input type="hidden" id="facultyIdFieldstudent" name="facultyIdFieldstudent">
+                        <div class="overflow-auto" style="max-height: 520px; width: 1000px;">
+                            <!-- RESULT OF DATA FROM THE STUDENTS EVALUATION -->
+                            <div id="resultStudent"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
 
     <!-- Modal -->
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -276,7 +498,104 @@ ob_end_flush();
 
 <script>
     let averageChart;
+
     $(document).ready(function () {
+        fetchFilteredResults();
+
+        $('#academic_year, #semester').change(function () {
+            fetchFilteredResults();
+        });
+        $(document).on('click', '.viewPeertoPeer-btn', function () {
+            var facultyID = $(this).data('id');
+            var facultyName = $(this).data('name');
+            $('#facultyIdField').val(facultyID);
+            $('#facultyNameField').text(facultyName);
+
+            // Call fetchFilteredResults after setting the facultyID
+            fetchFilteredResults();
+        });
+
+        $(document).on('click', '.viewstudentEvaluation-btn', function () {
+            var facultyIDstudent = $(this).data('idstudent'); // Get the faculty ID
+            var facultyNamestudent = $(this).data('namestudent'); // Get the faculty name
+
+            $('#facultyIdFieldstudent').val(facultyIDstudent); // Store the faculty ID in the hidden input
+            $('#facultyNameFieldstudent').text(facultyNamestudent); // Populate the modal with the faculty name
+
+            // Call fetchFilteredResults after setting the facultyID
+            fetchFilteredStudentResults();
+        });
+
+
+        // Call fetchFilteredResults automatically on page load or when filtering
+        function fetchFilteredResults() {
+            var semester = $('#semester').val();
+            var academicYear = $('#academic_year').val();
+            var facultyID = $('#facultyIdField').val(); // Get the stored faculty ID from the hidden field
+
+            if (semester === '' && academicYear === '') {
+                $.ajax({
+                    type: 'POST',
+                    url: 'filterpeertopeerResults.php',
+                    data: {
+                        fetchAll: true,
+                        facultyID: facultyID // Automatically include facultyID
+                    },
+                    success: function (data) {
+                        $('#result').html(data); // Update the results
+                    },
+                });
+            } else {
+                $.ajax({
+                    type: 'POST',
+                    url: 'filterpeertopeerResults.php',
+                    data: {
+                        semester: semester,
+                        academic_year: academicYear,
+                        facultyID: facultyID // Automatically include facultyID
+                    },
+                    success: function (data) {
+                        $('#result').html(data); // Update the results
+                    },
+                });
+            }
+        }
+
+        function fetchFilteredStudentResults() {
+            var semester = $('#semester').val();
+            var academicYear = $('#academic_year').val();
+            var facultyID = $('#facultyIdFieldstudent').val(); // Get the stored faculty ID from the hidden field
+
+            if (semester === '' && academicYear === '') {
+                $.ajax({
+                    type: 'POST',
+                    url: 'filterStudentResults.php',
+                    data: {
+                        fetchAll: true,
+                        facultyID: facultyID // Automatically include facultyID
+                    },
+                    success: function (data) {
+                        $('#resultStudent').html(data); // Update the results
+                    },
+                });
+            } else {
+                $.ajax({
+                    type: 'POST',
+                    url: 'filterStudentResults.php',
+                    data: {
+                        semester: semester,
+                        academic_year: academicYear,
+                        facultyID: facultyID // Automatically include facultyID
+                    },
+                    success: function (data) {
+                        $('#resultStudent').html(data); // Update the results
+                    },
+                });
+            }
+        }
+
+
+
         $('.edit-vcaa-btn').on('click', function () {
             var teacherId = $(this).data('id');
             var teacherName = $(this).data('name');

@@ -11,86 +11,83 @@ $userRow = mysqli_fetch_assoc($usersql_query);
 
 $FacultyID = $userRow['faculty_Id'];
 
-function getVerbalInterpretationAndLinks($averageRating, $category, $selectedSubject, $con)
+function getVerbalInterpretationAndLinks($averageRating, $categories, $selectedSubject, $con): array
 {
     $result = [
         'interpretation' => '',
         'links' => []
     ];
 
-    if ($averageRating >= 0 && $averageRating < 1) {
-        $result['interpretation'] = 'None';
-    } elseif ($averageRating >= 1 && $averageRating < 2) {
-        $result['interpretation'] = 'Poor';
-    } elseif ($averageRating >= 2 && $averageRating < 3) {
-        $result['interpretation'] = 'Fair';
-    } elseif ($averageRating >= 3 && $averageRating < 4) {
-        $result['interpretation'] = 'Satisfactory';
-    } elseif ($averageRating >= 4 && $averageRating < 5) {
-        $result['interpretation'] = 'Very Satisfactory';
-    } elseif ($averageRating == 5) {
-        $result['interpretation'] = 'Outstanding';
-    } else {
+    if ($averageRating < 0 || $averageRating > 5) {
         $result['interpretation'] = 'No description';
+    } else {
+        $interpretations = ['None', 'Poor', 'Fair', 'Satisfactory', 'Very Satisfactory', 'Outstanding'];
+        $result['interpretation'] = $interpretations[(int) $averageRating];
     }
 
-    $sqlSubjectLinks = "SELECT * FROM subject WHERE subject = '$selectedSubject'";
-    $sqlSubjectLinks_query = mysqli_query($con, $sqlSubjectLinks);
-    $subjectLinks = mysqli_fetch_assoc($sqlSubjectLinks_query);
-
+    $categoryLinks = [];
     $sqlCategoryLinks = "SELECT * FROM studentscategories";
     $sqlCategoryLinks_query = mysqli_query($con, $sqlCategoryLinks);
 
-    $categoryLinks = [];
-
     while ($categoryLinksRow = mysqli_fetch_assoc($sqlCategoryLinks_query)) {
         $dbCategory = $categoryLinksRow['categories'];
-
         $categoryLinks[$dbCategory] = [
             'linkOne' => $categoryLinksRow['linkOne'],
             'linkTwo' => $categoryLinksRow['linkTwo'],
             'linkThree' => $categoryLinksRow['linkThree'],
         ];
-        $categoryLinks['TEACHING EFFECTIVENESS'] = [
-            'linkOne' => $subjectLinks['linkOne'],
-            'linkTwo' => $subjectLinks['linkTwo'],
-            'linkThree' => $subjectLinks['linkThree'],
+    }
+
+    $sql = "SELECT linkOne, linkTwo, linkThree FROM subject WHERE subject_code = ?";
+    $stmt = mysqli_prepare($con, $sql);
+    mysqli_stmt_bind_param($stmt, 's', $selectedSubject);
+    mysqli_stmt_execute($stmt);
+    $resultSet = mysqli_stmt_get_result($stmt);
+
+    $contentKnowledgeLinks = [];
+
+    if ($subject = mysqli_fetch_assoc($resultSet)) {
+        $contentKnowledgeLinks = [
+            'linkOne' => $subject['linkOne'],
+            'linkTwo' => $subject['linkTwo'],
+            'linkThree' => $subject['linkThree'],
         ];
     }
 
-    if ($averageRating < 2) {
-        if (!empty($categoryLinks[$category])) {
+    if (empty($categoryLinks[$categories]['linkOne']) && empty($categoryLinks[$categories]['linkTwo']) && empty($categoryLinks[$categories]['linkThree'])) {
+        $categoryLinks['TEACHING EFFECTIVENESS'] = $contentKnowledgeLinks;
+    }
 
-            if (!empty($categoryLinks[$category]['linkOne'])) {
+    if ($averageRating < 2 && !empty($categoryLinks[$categories])) {
+        foreach (['linkOne', 'linkTwo', 'linkThree'] as $linkKey) {
+            if (!empty($categoryLinks[$categories][$linkKey])) {
                 $result['links'][] = [
-                    'text' => 'Recommendation Link One',
-                    'url' => htmlspecialchars($categoryLinks[$category]['linkOne'])
+                    'text' => 'Recommendation Link',
+                    'url' => htmlspecialchars($categoryLinks[$categories][$linkKey])
                 ];
             }
-
-            if (!empty($categoryLinks[$category]['linkTwo'])) {
-                $result['links'][] = [
-                    'text' => 'Recommendation Link Two',
-                    'url' => htmlspecialchars($categoryLinks[$category]['linkTwo'])
-                ];
-            }
-            if (!empty($categoryLinks[$category]['linkThree'])) {
-                $result['links'][] = [
-                    'text' => 'Recommendation Link Three',
-                    'url' => htmlspecialchars($categoryLinks[$category]['linkThree'])
-                ];
-            }
-
         }
-
     }
 
     if (empty($result['links'])) {
-        $result['links'][] = ['text' => 'No links available for this category', 'url' => ''];
+        foreach (['linkOne', 'linkTwo', 'linkThree'] as $linkKey) {
+            if (!empty($contentKnowledgeLinks[$linkKey])) {
+                $result['links'][] = [
+                    'text' => 'Recommendation Link',
+                    'url' => htmlspecialchars($contentKnowledgeLinks[$linkKey])
+                ];
+            }
+        }
+
+        if (empty($result['links'])) {
+            $result['links'][] = ['text' => 'No links available for this category', 'url' => ''];
+        }
     }
 
     return $result;
 }
+
+
 
 function sanitizeColumnName($name)
 {
@@ -101,37 +98,39 @@ $selectedSemester = isset($_POST['semester']) ? $_POST['semester'] : '';
 $selectedAcademicYear = isset($_POST['academic_year']) ? $_POST['academic_year'] : '';
 
 $sqlSubject = "
-    SELECT DISTINCT 
-        s.subject, 
-        sf.semester, 
-        sf.academic_year, 
+    SELECT DISTINCT s.subject, 
+        cq.semester, 
+        cq.academic_year, 
+        cq.subject,
         s.linkOne, 
         s.linkTwo, 
         s.linkThree
-    FROM instructor i
-    JOIN assigned_subject a ON i.faculty_Id = a.faculty_Id
-    JOIN subject s ON a.subject_id = s.subject_id
-    JOIN studentsform sf ON sf.toFacultyID = a.faculty_Id
-    WHERE i.faculty_Id = '$FacultyID'
+    FROM studentsform cq
+    JOIN instructor i ON cq.toFacultyID = i.faculty_Id
+    JOIN subject s ON cq.subject = s.subject_code
+    WHERE cq.toFacultyID = '$FacultyID'
 ";
 
 if (!empty($selectedAcademicYear)) {
-    $sqlSubject .= " AND sf.academic_year = '$selectedAcademicYear'";
+    $sqlSubject .= " AND cq.academic_year = '$selectedAcademicYear'";
 }
 if (!empty($selectedSemester)) {
-    $sqlSubject .= " AND sf.semester = '$selectedSemester'";
+    $sqlSubject .= " AND cq.semester = '$selectedSemester'";
 }
 
-$sqlSubject .= " GROUP BY s.subject, sf.semester, sf.academic_year ORDER BY sf.semester, sf.academic_year DESC";
+$sqlSubject .= " ORDER BY cq.semester DESC, cq.academic_year DESC, cq.subject";
 
 $sqlSubject_query = mysqli_query($con, $sqlSubject);
+if (!$sqlSubject_query) {
+    die("Query Failed: " . mysqli_error($con));
+}
 
 if (mysqli_num_rows($sqlSubject_query) > 0) {
     while ($subject = mysqli_fetch_assoc($sqlSubject_query)) {
         ?>
 
-        <div class="ulo d-flex justify-content-between mx-3">
-            <div class="">
+        <div class=" ulo d-flex justify-content-between mx-3">
+            <div>
                 <h5>Semester:
                     <span class="fw-bold"><?php echo htmlspecialchars($subject['semester']) ?></span>
                 </h5>
@@ -200,7 +199,6 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
                                         $ratingCount++;
                                     }
                                 }
-
                                 mysqli_data_seek($resultCriteria, 0);
                             }
 
@@ -214,10 +212,6 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
                                 $totalAverage += $averageRating;
                                 $categoryCount++;
 
-                                $linkOne = $subject['linkOne'];
-                                $linkTwo = $subject['linkTwo'];
-                                $linkThree = $subject['linkThree'];
-
                                 $interpretationData = getVerbalInterpretationAndLinks($averageRating, $categories, $selectedSubject, $con);
                                 ?>
                                 <tr>
@@ -230,10 +224,15 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
                                             if (is_array($interpretationData['links'])) {
                                                 echo "<ul style='list-style: none; padding: 0; margin: 0;'>";
                                                 foreach ($interpretationData['links'] as $link) {
-                                                    if (!empty($link['url'])) {
-                                                        echo "<li><a href=\"" . htmlspecialchars($link['url']) . "\" target=\"_blank\">" . htmlspecialchars($link['text']) . "</a></li>";
-                                                    } else {
-                                                        echo "<li>" . htmlspecialchars($link['text']) . "</li>";
+                                                    if (is_array($link) && !empty($link['text'])) {
+                                                        $text = htmlspecialchars($link['text']);
+                                                        $url = !empty($link['url']) ? htmlspecialchars($link['url']) : '';
+
+                                                        if (!empty($url)) {
+                                                            echo "<li><a href=\"$url\" target=\"_blank\">$text</a></li>";
+                                                        } else {
+                                                            echo "<li>$text</li>";
+                                                        }
                                                     }
                                                 }
                                                 echo "</ul>";
@@ -256,9 +255,9 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
                     $finalAverageRating = $totalAverage / $categoryCount;
                     ?>
                     <tr>
-                        <th>Total Average</th>
-                        <th><?php echo number_format((float) $finalAverageRating, 2, '.', ''); ?></th>
-                        <th></th>
+                        <td colspan="1" class="fw-bold">Final Average:</td>
+                        <td colspan="1" class="fw-bold"><?php echo number_format((float) $finalAverageRating, 2, '.', ''); ?></td>
+                        <td colspan="2"></td>
                     </tr>
                     <?php
                 }
@@ -268,6 +267,6 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
         <?php
     }
 } else {
-    echo "<h2 style='text-align: center; color: red;'>No subjects found for this instructor.</h2>";
+    echo "<h2 style='text-align: center; color: red;'>No record found.</h2>";
 }
 ?>

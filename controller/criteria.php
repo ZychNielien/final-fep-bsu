@@ -687,9 +687,32 @@ if (isset($_POST['classroomObservationSubmit'])) {
             mysqli_stmt_bind_param($stmt, $types, ...$values);
 
             if (mysqli_stmt_execute($stmt)) {
-                $_SESSION['status'] = "Classroom Observation Completed Successfully";
-                $_SESSION['status-code'] = "success";
-                header('location:../view/adminModule/classObser.php');
+
+                if (mysqli_stmt_execute($stmt)) {
+                    // Successful insertion, now update bookings
+                    $update_SQL = "UPDATE `bookings` SET evaluation_status = 1 WHERE faculty_Id = ? AND course = ?";
+                    if ($update_stmt = mysqli_prepare($con, $update_SQL)) {
+                        // Bind parameters for update
+                        mysqli_stmt_bind_param($update_stmt, 'is', $toFacultyID, $courseTitle); // Adjust types accordingly
+
+                        if (mysqli_stmt_execute($update_stmt)) {
+                            $_SESSION['status'] = "Classroom Observation Completed Successfully";
+                            $_SESSION['status-code'] = "success";
+                            $_SESSION['status-code'] = "success";
+                            header('location:../view/adminModule/classObser.php');
+                        } else {
+                            $_SESSION['status'] = "Error updating classroom observation status: " . mysqli_stmt_error($update_stmt);
+                            $_SESSION['status-code'] = "error";
+                        }
+                        mysqli_stmt_close($update_stmt);
+                    } else {
+                        $_SESSION['status'] = "Error preparing update statement: " . mysqli_error($con);
+                        $_SESSION['status-code'] = "error";
+                    }
+                } else {
+                    $_SESSION['status'] = "Error Classroom Observation: " . mysqli_stmt_error($stmt);
+                    $_SESSION['status-code'] = "error";
+                }
                 exit;
             } else {
                 $_SESSION['status'] = "Error Classroom Observation : " . mysqli_error($con);

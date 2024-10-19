@@ -9,7 +9,7 @@ $usersql = "SELECT * FROM `instructor` WHERE faculty_Id = '$userId'";
 $usersql_query = mysqli_query($con, $usersql);
 $userRow = mysqli_fetch_assoc($usersql_query);
 
-$FacultyID = $userRow['faculty_Id'];
+$FacultyID = $_POST['facultyID'];
 
 function getVerbalInterpretationAndLinks($averageRating, $categories, $selectedSubject, $con): array
 {
@@ -158,7 +158,7 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
             </thead>
             <tbody>
                 <?php
-                $facultyID = $userRow['faculty_Id'];
+                $facultyID = $_POST['facultyID'];
                 $totalAverage = 0;
                 $categoryCount = 0;
 
