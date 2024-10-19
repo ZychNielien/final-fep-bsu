@@ -638,8 +638,13 @@ if (isset($_POST['classroomObservationSubmit'])) {
     $doneStatus = isset($_POST['doneStatus']) ? trim($_POST['doneStatus']) : '';
     $semester = isset($_POST['semester']) ? trim($_POST['semester']) : '';
     $academic_year = isset($_POST['academic_year']) ? trim($_POST['academic_year']) : '';
+    $bookedSlot = isset($_POST['bookedSlot']) ? trim($_POST['bookedSlot']) : '';
+    $bookedSelectedDate = isset($_POST['bookedSelectedDate']) ? trim($_POST['bookedSelectedDate']) : '';
+    $bookedStartTime = isset($_POST['bookedStartTime']) ? trim($_POST['bookedStartTime']) : '';
+    $bookedEndTime = isset($_POST['bookedEndTime']) ? trim($_POST['bookedEndTime']) : '';
 
-    $excludeKeys = ['classroomObservationSubmit', 'courseTitle', 'toFaculty', 'lengthOfCourse', 'lengthOfObservation', 'fromFaculty', 'date', 'subjectMatter', 'doneStatus', 'toFacultyID', 'fromFacultyID', 'semester', 'academic_year'];
+
+    $excludeKeys = ['classroomObservationSubmit', 'courseTitle', 'toFaculty', 'lengthOfCourse', 'lengthOfObservation', 'fromFaculty', 'date', 'subjectMatter', 'doneStatus', 'toFacultyID', 'fromFacultyID', 'semester', 'academic_year', 'bookedSlot', 'bookedSelectedDate', 'bookedStartTime', 'bookedEndTime'];
 
     foreach (array_diff_key($_POST, array_flip($excludeKeys)) as $key => $value) {
         $cleanKey = str_replace('_', '', trim($key));
@@ -687,9 +692,35 @@ if (isset($_POST['classroomObservationSubmit'])) {
             mysqli_stmt_bind_param($stmt, $types, ...$values);
 
             if (mysqli_stmt_execute($stmt)) {
-                $_SESSION['status'] = "Classroom Observation Completed Successfully";
-                $_SESSION['status-code'] = "success";
-                header('location:../view/adminModule/classObser.php');
+
+                if (mysqli_stmt_execute($stmt)) {
+                    // Successful insertion, now update bookings
+                    $update_SQL = "UPDATE `bookings` 
+                                   SET evaluation_status = 1 
+                                   WHERE faculty_Id = ? AND course = ? AND slot = ? AND selected_date = ? AND start_time = ? AND end_time = ?";
+
+                    if ($update_stmt = mysqli_prepare($con, $update_SQL)) {
+                        // Bind parameters for the update
+                        mysqli_stmt_bind_param($update_stmt, 'isssss', $toFacultyID, $courseTitle, $bookedSlot, $bookedSelectedDate, $bookedStartTime, $bookedEndTime);
+
+                        if (mysqli_stmt_execute($update_stmt)) {
+                            $_SESSION['status'] = "Classroom Observation Completed Successfully";
+                            $_SESSION['status-code'] = "success";
+                            header('location:../view/adminModule/classObser.php');
+                        } else {
+                            $_SESSION['status'] = "Error updating classroom observation status: " . mysqli_stmt_error($update_stmt);
+                            $_SESSION['status-code'] = "error";
+                        }
+                        mysqli_stmt_close($update_stmt);
+                    } else {
+                        $_SESSION['status'] = "Error preparing update statement: " . mysqli_error($con);
+                        $_SESSION['status-code'] = "error";
+                    }
+                } else {
+                    $_SESSION['status'] = "Error Classroom Observation: " . mysqli_stmt_error($stmt);
+                    $_SESSION['status-code'] = "error";
+                }
+
                 exit;
             } else {
                 $_SESSION['status'] = "Error Classroom Observation : " . mysqli_error($con);

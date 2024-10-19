@@ -46,7 +46,7 @@ if (isset($_POST['preferredSched'])) {
         }
         $updateStmt->close();
     } else {
-        $insertQuery = "INSERT INTO preferredschedule (faculty_Id,first_name, last_name, dayOfWeek, startTimePreferred, endTimePreferred, dayOfWeekTwo, startTimeSecondary, endTimeSecondary,courseClassroom) VALUES (?,?,?, ?, ?, ?, ?, ?, ?)";
+        $insertQuery = "INSERT INTO preferredschedule (faculty_Id,first_name, last_name, dayOfWeek, startTimePreferred, endTimePreferred, dayOfWeekTwo, startTimeSecondary, endTimeSecondary,courseClassroom) VALUES (?,?,?, ?, ?, ?, ?, ?, ?,?)";
 
         $insertStmt = $con->prepare($insertQuery);
         $insertStmt->bind_param("ssssssssss", $faculty_Id, $first_name, $last_name, $dayOfWeek, $startTimePreferred, $endTimePreferred, $dayOfWeekTwo, $startTimeSecondary, $endTimeSecondary, $courseClassroom);

@@ -160,13 +160,13 @@ $userRow = mysqli_fetch_assoc($usersql_query);
                     ?>
                     ">
                         <i class="material-icons">assignment_turned_in</i>
-                        <span>VCAA</span>
+                        <span>VCAA and Faculty's evaluations</span>
 
                     </a>
                     <ul class="subMenu blank">
                         <li>
                             <a href="vcaa.php" class="linkName">
-                                VCAA
+                                VCAA and Faculty's evaluations
                             </a>
                         </li>
                     </ul>
