@@ -119,7 +119,7 @@ while ($subject = mysqli_fetch_assoc($sqlSubject_query)) {
 }
 
 $faculty_Id = mysqli_real_escape_string($con, $_SESSION["userid"]);
-$sql = "SELECT subject, combined_average, semester, academic_year FROM faculty_averages WHERE faculty_Id = '$faculty_Id' ORDER BY academic_year, semester";
+$sql = "SELECT subject, combined_average, semester, academic_year FROM faculty_averages WHERE faculty_Id = '$faculty_Id' ORDER BY academic_year, semester ";
 $result = mysqli_query($con, $sql);
 
 $semesters = [];
@@ -180,6 +180,7 @@ $semestersJson = json_encode($semesters);
         .allRating {
             flex-grow: 1;
             padding: 0 50px;
+            max-height: 400px;
         }
 
         .file-drop-area {
@@ -231,81 +232,83 @@ $semestersJson = json_encode($semesters);
 
     <section class="contentContainer">
 
-        <div class="graphContainer d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-evenly mb-5">
+            <div class="chart-container  justify-content-center  ">
 
-            <div class="currentRating d-flex flex-column justify-content-center  align-items-center w-100">
+                <div class="d-flex justify-content-center my-3">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#vcaaResults">
+                        VCAA Results
+                    </button>
+                </div>
 
-                <div class="chart-container  justify-content-center">
+                <h3 class="text-center">Your VCAA Rating</h3>
 
-                    <div class="d-flex justify-content-center my-3">
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                            data-bs-target="#vcaaResults">
-                            VCAA Results
-                        </button>
-                    </div>
+                <canvas id="averageChart" style="max-width: 250px;"></canvas>
 
-                    <h3 class="text-center">Your VCAA Rating</h3>
+            </div>
+            <div class="chart-container  justify-content-center">
+                <h3 class="text-center">Latest Peer to Peer Evaluation REsult</h3>
+                <canvas id="averageRatingChart" style="min-height: 300px;"></canvas>
+            </div>
+        </div>
 
-                    <canvas id="averageChart" style="max-width: 250px;"></canvas>
+
+        <div class=" d-flex flex-column justify-content-center align-items-center mb-5">
+
+            <h3 class="text-center my-2">Evaluation of VCAA Ratings Across Semesters and Academic Years</h3>
+
+            <div class="container my-3 d-flex justify-content-evenly">
+
+                <div class="form-group">
+
+                    <label for="startSemesterFilter">Select Start Semester:</label>
+                    <select id="startSemesterFilter" class="form-control">
+                        <option value="">Select Start Semester</option>
+                        <?php foreach ($semesters as $semester): ?>
+                            <option value="<?php echo $semester; ?>"><?php echo $semester; ?></option>
+                        <?php endforeach; ?>
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="endSemesterFilter">Select End Semester:</label>
+                    <select id="endSemesterFilter" class="form-control">
+                        <option value="">Select End Semester</option>
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="subjectFilter">Select Subject:</label>
+                    <select id="subjectFilter" class="form-control">
+                        <option value="all">All Subjects</option>
+                        <?php foreach (array_keys($subjectData) as $subject): ?>
+                            <option value="<?php echo $subject; ?>"><?php echo $subject; ?></option>
+                        <?php endforeach; ?>
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <button class="btn btn-success" id="printBtn">Print</button>
 
                 </div>
 
             </div>
 
-            <div class="allRating d-flex flex-column justify-content-center align-items-center">
-
-                <h3 class="text-center my-2">Evaluation of VCAA Ratings Across Semesters and Academic Years</h3>
-
-                <div class="container my-3 d-flex justify-content-evenly">
-
-                    <div class="form-group">
-
-                        <label for="startSemesterFilter">Select Start Semester:</label>
-                        <select id="startSemesterFilter" class="form-control">
-                            <option value="">Select Start Semester</option>
-                            <?php foreach ($semesters as $semester): ?>
-                                <option value="<?php echo $semester; ?>"><?php echo $semester; ?></option>
-                            <?php endforeach; ?>
-                        </select>
-
-                    </div>
-
-                    <div class="form-group">
-
-                        <label for="endSemesterFilter">Select End Semester:</label>
-                        <select id="endSemesterFilter" class="form-control">
-                            <option value="">Select End Semester</option>
-                        </select>
-
-                    </div>
-
-                    <div class="form-group">
-
-                        <label for="subjectFilter">Select Subject:</label>
-                        <select id="subjectFilter" class="form-control">
-                            <option value="all">All Subjects</option>
-                            <?php foreach (array_keys($subjectData) as $subject): ?>
-                                <option value="<?php echo $subject; ?>"><?php echo $subject; ?></option>
-                            <?php endforeach; ?>
-                        </select>
-
-                    </div>
-
-                    <div class="form-group">
-
-                        <button class="btn btn-success" id="printBtn">Print</button>
-
-                    </div>
-
-                </div>
-
-                <canvas id="lineChart"></canvas>
-
-            </div>
-
-
+            <canvas id="barChart" style="max-height: 400px; max-width: 70%"></canvas>
 
         </div>
+
+
+
+
+
+
 
     </section>
 
@@ -440,13 +443,56 @@ $semestersJson = json_encode($semesters);
             printWindow.focus();
             printWindow.print();
 
-            // Close the print window after printing
             printWindow.close();
         }
     </script>
+
     <script>
+        $(document).ready(function () {
+            // Show loading indicator
+            $('#loading').show();
 
+            $.ajax({
+                url: 'peerToPeerGraph.php',
+                type: 'GET',
+                dataType: 'json',
+                success: function (categoriesData) {
+                    // Hide loading indicator
+                    $('#loading').hide();
 
+                    const peerToPeerctx = document.getElementById('averageRatingChart').getContext('2d');
+                    const colors = Object.keys(categoriesData).map(() => {
+                        // Generate random colors for each bar
+                        return `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() *
+                            255)}, 0.6)`;
+                    });
+
+                    const chart = new Chart(peerToPeerctx, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(categoriesData), // Category names
+                            datasets: [{
+                                label: 'Average Ratings',
+                                data: Object.values(categoriesData), // Average ratings
+                                backgroundColor: colors,
+                                borderColor: colors.map(color => color.replace('0.6', '1')), // Use darker colors for borders
+                                borderWidth: 1
+                            }]
+                        },
+
+                    });
+                },
+                error: function (xhr, status, error) {
+                    // Hide loading indicator and show error message
+                    $('#loading').hide();
+                    console.error("AJAX Error: ", status, error);
+                    alert("An error occurred while fetching data. Please try again later.");
+                }
+            });
+        });
+    </script>
+
+    <script>
 
         var averageRating = <?php echo json_encode($average); ?>;
 
@@ -518,7 +564,9 @@ $semestersJson = json_encode($semesters);
         });
 
     </script>
+
     <script>
+
         const subjects = <?php echo $subjectsJson; ?>;
         const subjectData = <?php echo $subjectDataJson; ?>;
         const semesters = <?php echo $semestersJson; ?>;
@@ -573,15 +621,14 @@ $semestersJson = json_encode($semesters);
                     return {
                         label: subject,
                         data: cleanData,
-                        borderColor: colorPalette[index % colorPalette.length],
                         backgroundColor: colorPalette[index % colorPalette.length],
-                        fill: false,
-                        tension: 0.1
+                        borderColor: colorPalette[index % colorPalette.length],
+                        borderWidth: 1
                     };
                 });
         }
 
-        function updateChart() {
+        function updateCharts() {
             const selectedSubject = document.getElementById('subjectFilter').value;
 
             const startSemester = document.getElementById('startSemesterFilter').value;
@@ -594,30 +641,32 @@ $semestersJson = json_encode($semesters);
 
             const datasets = createFilteredDatasets(selectedSubject);
 
-            lineChart.data.labels = filteredLabels;
-            lineChart.data.datasets = datasets;
-            lineChart.update();
+            // Update Bar Chart
+            barChart.data.labels = filteredLabels;
+            barChart.data.datasets = datasets.map(dataset => ({
+                ...dataset,
+                type: 'bar', // Set type to 'bar' for the bar chart
+            }));
+            barChart.update();
         }
-
 
         document.getElementById('startSemesterFilter').addEventListener('change', () => {
             filterEndSemesters();
-            updateChart();
+            updateCharts();
         });
 
-        document.getElementById('subjectFilter').addEventListener('change', function () {
-            const selectedSubject = this.value;
-            updateChart();
-        });
+        document.getElementById('subjectFilter').addEventListener('change', updateCharts);
+        document.getElementById('endSemesterFilter').addEventListener('change', updateCharts);
 
-        document.getElementById('endSemesterFilter').addEventListener('change', updateChart);
-
-        const ctxLine = document.getElementById('lineChart').getContext('2d');
-        const lineChart = new Chart(ctxLine, {
-            type: 'line',
+        const ctxBar = document.getElementById('barChart').getContext('2d');
+        const barChart = new Chart(ctxBar, {
+            type: 'bar', // Specify the chart type as 'bar'
             data: {
                 labels: semesters,
-                datasets: createFilteredDatasets('all')
+                datasets: createFilteredDatasets('all').map(dataset => ({
+                    ...dataset,
+                    type: 'bar', // Set type to 'bar' for the bar chart
+                }))
             },
             options: {
                 scales: {
@@ -632,13 +681,16 @@ $semestersJson = json_encode($semesters);
         document.getElementById('startSemesterFilter').value = semesters[0];
         filterEndSemesters();
         document.getElementById('endSemesterFilter').value = semesters[semesters.length - 1];
-        updateChart();
+        updateCharts();
 
     </script>
+
     <script src="../../bootstrap/js/bootstrap.bundle.min.js"></script>
+
     <script src="../../public/js/sweetalert2@11.js"></script>
 
     <script>
+
         $(document).ready(function () {
 
             fetchFilteredResults();
@@ -708,7 +760,7 @@ $semestersJson = json_encode($semesters);
             }
 
             $('#printBtn').click(function () {
-                printPartOfPage('lineChart');
+                printPartOfPage('barChart');
             });
         });
 
