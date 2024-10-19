@@ -20,13 +20,11 @@ $selectedSemester = isset($_POST['semester']) ? $_POST['semester'] : '';
 $selectedAcademicYear = isset($_POST['academic_year']) ? $_POST['academic_year'] : '';
 
 $sqlSubject = "
-    SELECT DISTINCT s.subject, 
+    SELECT DISTINCT 
         cq.semester, 
-        cq.academic_year, 
-        cq.courseTitle
+        cq.academic_year
     FROM classroomobservation cq
     JOIN instructor i ON cq.toFacultyID = i.faculty_Id
-    JOIN subject s ON cq.courseTitle = s.subject_code
     WHERE cq.toFacultyID = '$FacultyID'
 ";
 
@@ -37,7 +35,7 @@ if (!empty($selectedSemester)) {
     $sqlSubject .= " AND cq.semester = '$selectedSemester'";
 }
 
-$sqlSubject .= " ORDER BY cq.semester DESC, cq.academic_year DESC, cq.courseTitle";
+$sqlSubject .= " ORDER BY cq.semester DESC, cq.academic_year DESC";
 
 $sqlSubject_query = mysqli_query($con, $sqlSubject);
 if (!$sqlSubject_query) {
@@ -54,7 +52,6 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
         $categoryCount = 0;
 
         $facultyID = $userRow['faculty_Id'];
-        $selectedSubject = $subject['courseTitle'];
         $selectedSemester = $subject['semester'];
         $selectedAcademicYear = $subject['academic_year'];
 
@@ -71,7 +68,6 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
             $resultCriteria = mysqli_query($con, $sqlCriteria);
 
             $SQLFaculty = "SELECT * FROM `classroomobservation` WHERE toFacultyID = '$facultyID' 
-                            AND courseTitle = '$selectedSubject' 
                             AND semester = '$selectedSemester' 
                             AND academic_year = '$selectedAcademicYear'";
 
