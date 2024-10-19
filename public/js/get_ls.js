@@ -7,12 +7,14 @@ $(document).ready(function () {
   var year = studentData[0].year_level;
   var semester = studentData[0].semester;
   var srcode = studentData[0].sr_code;
+  var getMajor = studentData[0].major;
 
   $("#lastname").text(lastname);
   $("#firstname").text(firstname);
   $("#course").text(course);
   $("#year").text(year);
   $("#semester").text(semester);
+  $('#usermajor').text(getMajor);
 
   if (year == "FIRST" || year == "SECOND") {
     $("#maxunit").text("23");
@@ -20,8 +22,42 @@ $(document).ready(function () {
     $("#maxunit").text("21");
   }
 
-  if (year == "THIRD" && semester == "FIRST") {
-    $("#major").css("display", "flex");
+  // if(getMajor == 0){
+  //   $('#submitMajor').on('click', function(){
+  //     $.ajax({
+  //       url: '../controller/getMajor.php',
+  //       type: 'GET',
+  //       data: {srcode: srcode},
+  //       dataType: 'json',
+  //       success: function(data){
+  //         localStorage.setItem('GetMajor', JSON.stringify(data));
+  //       }
+  //     })
+        
+  //   });
+  //   var getM = JSON.parse(localStorage.getItem("GetMajor"));
+  //   var getMajor = getM[0].major;
+  // }
+  
+
+  
+
+
+  $.ajax({
+    url: '../controller/getSem.php',
+    type: 'GET',
+    dataType: 'json',
+    success: function(data){
+      localStorage.setItem('GetSemester', JSON.stringify(data));
+    }
+  })
+  var getSem = JSON.parse(localStorage.getItem("GetSemester"));
+  var GetSems = getSem[0].semester;
+  $('#getSem, #getSem2').text(GetSems);
+
+
+  if(year == 'THIRD' && semester == 'FIRST' && getMajor == 0){
+    $('#major').css('display', 'flex');
     Swal.fire({
       title: "Choose your Major",
       text: "You need to choose your Major",
@@ -179,7 +215,7 @@ $(document).ready(function () {
                     icon: "success",
                     title: "You are now enroll in this subject",
                     toast: true,
-                    timer: 2000,
+                    timer: 1000,
                     timerProgressBar: true,
                     showConfirmButton: false,
                     position: "top-right",

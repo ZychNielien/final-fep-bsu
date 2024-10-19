@@ -55,6 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     curl_close($ch);
 
     echo json_encode(['status' => 'success', 'message' => 'Booking created successfully. Notification sent to admin.']);
+
+    
 } else {
     echo json_encode(['status' => 'error', 'message' => 'Invalid request.']);
 }

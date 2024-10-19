@@ -713,11 +713,10 @@ if (!isset($_SESSION['studentSRCode'])) {
           <div>
             <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i
                 class="fa-regular fa-circle-xmark"></i> Close</button>
-          </div>
-          <div>
-            <button type="submit" name="submitMajor" class="btn btn-success"><i class="fa-solid fa-floppy-disk"></i>
-              Submit</button>
-          </div>
+            </div>
+            <div>
+              <button type="submit" id="submitMajor" name="submitMajor" class="btn btn-success"><i class="fa-solid fa-floppy-disk"></i> Submit</button>
+            </div>
           </form>
         </div>
       </div>

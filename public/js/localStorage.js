@@ -1,9 +1,8 @@
 $(document).ready(function() {
 
-    $('#studentLogin').on('click', function(){
+    $('#studentSRCode').on('change', function(){
 
         var studentSRCode = $('#studentSRCode').val();
-
         $.ajax({
             url: '../../controller/localStorage.php',
             type: 'GET',
