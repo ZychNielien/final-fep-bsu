@@ -96,8 +96,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentaction'])) {
         if ($con->query($clearSql) === TRUE) {
             $clearSql = "DELETE FROM enrolled_subject";
             if ($con->query($clearSql) === TRUE) {
-
+                $clearSql_std = "DELETE FROM enrolled_student";
+                if ($con->query($clearSql_std) === TRUE) {
                 echo json_encode(["status" => "success", "message" => "Evaluation closed."]);
+                }
             } else {
                 echo json_encode(["status" => "error", "message" => "Error: " . $con->error]);
             }
