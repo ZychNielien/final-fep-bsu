@@ -1,5 +1,5 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "final-fep-bsu");
+$conn = new mysqli("localhost", "u789905971_herbert", "REyes0302", "u789905971_fepBsu");
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
