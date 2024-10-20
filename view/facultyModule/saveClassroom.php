@@ -3,7 +3,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 session_start();
 
-$conn = new mysqli("localhost", "root", "", "final-fep-bsu");
+$conn = new mysqli("localhost", "u789905971_herbert", "REyes0302", "u789905971_fepBsu");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $course = $_POST['course'] ?? '';
