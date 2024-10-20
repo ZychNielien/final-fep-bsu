@@ -153,26 +153,115 @@ $(document).ready(function () {
     },
   });
 
-//UPDATE YEAR AND SEM
-  // if(semester == 'FIRST') {
-  //   $.ajax({
-  //     url: '../controller/updateSem.php',
-  //     type: 'GET',
-  //     data: {srcode: srcode, sem: GetSemester},
-  //     success: function(data){
-  //       console.log(data);
-  //     }
-  //   });
-  // }else if(semester == 'SECOND') {
-  //   $.ajax({
-  //     url: '../controller/updateYear.php',
-  //     type: 'GET',
-  //     data: {srcode: srcode, year: getYear, sem: GetSemester},
-  //     success: function(data){
-  //       console.log(data);
-  //     }
-  //   });
-  // }
+  
+    // START UPDATE
+    function checkButtonDisabled() {
+      const isButtonDisabled = localStorage.getItem('isUpdateYSDisabled');
+      if (isButtonDisabled === 'true') {
+        $('#UpdateYearOrSem').css('display', 'none'); 
+      } else {
+        $('#UpdateYS').prop('disabled', false);
+      }
+    }
+
+
+  checkButtonDisabled();
+
+$.ajax({
+  url: '../controller/getOpenAYC.php',
+  type: 'GET',
+  dataType: 'json',
+  success: function (data) {
+    
+    var isOpen = data[0].isOpen;
+    
+    if (isOpen != 1) {
+      console.log('School Year is Closed');
+      
+      $('#UpdateYS').on('click', function(){
+        const swalWithBootstrapButtons = Swal.mixin({
+          customClass: {
+            confirmButton: "btn btn-success ms-2",
+            cancelButton: "btn btn-danger me-2"
+          },
+          buttonsStyling: false
+        });
+        swalWithBootstrapButtons.fire({
+          title: "Please confirm",
+          text: "Confirm to update your status",
+          icon: "info",
+          showCancelButton: true,
+          confirmButtonText: "Confirm",
+          cancelButtonText: "Cancel",
+          reverseButtons: true
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // UPDATE YEAR AND SEM
+            if (semester == 'FIRST') {
+              $.ajax({
+                url: '../controller/updateSem.php',
+                type: 'GET',
+                data: { srcode: srcode, sem: GetSemester },
+                success: function(data) {
+                  $('#UpdateYS').prop('disabled', true);
+                  localStorage.setItem('isUpdateYSDisabled', 'true');
+                  
+                  Swal.fire({
+                    title: "Status updated",
+                    text: "You will be redirected to Login Page",
+                    icon: "success",
+                    confirmButtonText: "Confirm",
+                    showConfirmButton: true,
+                    didClose: () => {
+                      window.location.href= "../controller/logout.php";
+                    },
+                  });
+                }
+              });
+            } else if (semester == 'SECOND') {
+              $.ajax({
+                url: '../controller/updateYear.php',
+                type: 'GET',
+                data: { srcode: srcode, year: getYear, sem: GetSemester },
+                success: function(data) {
+                  $('#UpdateYS').prop('disabled', true);
+                  localStorage.setItem('isUpdateYSDisabled', 'true');
+                  
+                  Swal.fire({
+                    title: "Status updated",
+                    text: "You will be redirected to Login Page",
+                    icon: "success",
+                    confirmButtonText: "Confirm",
+                    showConfirmButton: true,
+                    didClose: () => {
+                      window.location.href= "../controller/logout.php";
+                    },
+                  });
+                }
+              });
+            }
+            // END UPDATE YEAR AND SEM
+          } else if (result.dismiss === Swal.DismissReason.cancel) {
+            swalWithBootstrapButtons.fire({
+              title: "Cancelled",
+              text: "Updating status has been cancelled",
+              icon: "error"
+            });
+          }
+        });
+      });
+      
+    } else {
+      console.log('School Year is still Open');
+      localStorage.setItem('isUpdateYSDisabled', 'false');
+      $('#UpdateYearOrSem').css('display', 'none');
+    }
+  }
+});
+//END UPDATE
+  
+
+
 
   //enrollment part to
   $("#enroll-table tbody").on("click", ".enroll-now", function () {
@@ -181,7 +270,7 @@ $(document).ready(function () {
     $.ajax({
       url: "../controller/sumUnit.php",
       type: "GET",
-      data: { srcode: srcode },
+      data: { srcode: srcode , year: year },
       dataType: "json",
       success: function (data) {
         localStorage.setItem("UserTotalUnit", JSON.stringify(data));
@@ -267,7 +356,7 @@ $(document).ready(function () {
   $.ajax({
     url: "../controller/sumUnit.php",
     type: "GET",
-    data: { srcode: srcode },
+    data: { srcode: srcode, year: year},
     dataType: "json",
     success: function (data) {
       localStorage.setItem("UserTotalUnit", JSON.stringify(data));
