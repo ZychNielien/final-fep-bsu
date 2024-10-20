@@ -35,7 +35,7 @@ if (!empty($selectedSemester)) {
     $sqlSubject .= " AND cq.semester = '$selectedSemester'";
 }
 
-$sqlSubject .= " ORDER BY cq.academic_year DESC, cq.semester DESC";
+$sqlSubject .= " ORDER BY cq.academic_year ASC, cq.semester ASC";
 
 $sqlSubject_query = mysqli_query($con, $sqlSubject);
 if (!$sqlSubject_query) {
