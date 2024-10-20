@@ -19,7 +19,10 @@ if (!isset($_SESSION['studentSRCode'])) {
   <link rel="stylesheet" href="../fontawesome/css/all.min.css">
 
   <link rel="shortcut icon" href="../public/picture/cics.png" type="image/x-icon" />
+  <link rel="stylesheet" href="../public/css/sweetalert.min.css">
 
+  <!-- SCRIPT -->
+  <script src="../public/js/sweetalert2@11.js"></script>
   <link rel="stylesheet" href="../bootstrap/css/bootstrap.css" />
   <link rel="stylesheet" href="../fontawesome/css/all.min.css">
   <style>
@@ -109,7 +112,7 @@ if (!isset($_SESSION['studentSRCode'])) {
             </p>
           </div>
         </div>
-          <div class="row">
+        <div class="row">
           <div class="col">
             <p class="fw-bold">
               <i class="fa-solid fa-play text-muted"></i> <span id="semester"></span> <span> - SEMESTER</span>
@@ -217,14 +220,14 @@ if (!isset($_SESSION['studentSRCode'])) {
       <div id="UpdateYearOrSem">
         <button class="btn btn-success d-flex align-items-center" id="UpdateYS">
           <h2><i class="fa-solid fa-user-pen"></i></h2>
-            <h6 style="font-family: monospace;" class="px-2">Update My Status</h6>
+          <h6 style="font-family: monospace;" class="px-2">Update My Status</h6>
         </button>
       </div>
       <h1 style="display: none;"><?php echo $_SESSION['studentSRCode'] ?></h1>
       <div id="major">
         <button class="btn btn-success d-flex align-items-center" data-bs-target="#major_modal" data-bs-toggle="modal">
           <h2><i class="fa-solid fa-graduation-cap"></i></h2>
-            <h6 style="font-family: monospace;" class="px-2">Choose A Major</h6>
+          <h6 style="font-family: monospace;" class="px-2">Choose A Major</h6>
         </button>
       </div>
     </div>
@@ -814,7 +817,35 @@ if (!isset($_SESSION['studentSRCode'])) {
     </div>
   </div>
   <!-- END MAJOR MODAL -->
+  <script>
+    $(document).ready(function () {
+      const form = $("#multi-step-form");
 
+      form.on("submit", function (event) {
+        let allRatingsCompleted = true;
+
+        $('input[type="radio"]').each(function () {
+          const name = $(this).attr('name');
+          const isChecked = $(`input[name='${name}']:checked`).length > 0;
+
+          if (!isChecked) {
+            allRatingsCompleted = false;
+            return false;
+          }
+        });
+        if (!allRatingsCompleted) {
+          event.preventDefault();
+          swal({
+            title: "Notice",
+            text: "Please ensure that all ratings are completed before submitting the form.",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+          });
+        }
+      });
+    });
+  </script>
   <script>
     $(document).ready(function () {
       $('input[type="radio"]').click(function () {

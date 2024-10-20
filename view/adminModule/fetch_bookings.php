@@ -1,10 +1,10 @@
 <?php
 header('Content-Type: application/json');
 
-$conn = new mysqli("localhost", "u789905971_herbert", "REyes0302", "u789905971_fepBsu");
+include "../../model/dbconnection.php";
 
 $sql = "SELECT * FROM bookings";
-$result = $conn->query($sql);
+$result = $con->query($sql);
 
 if ($result->num_rows > 0) {
     $bookings = [];
@@ -16,6 +16,6 @@ if ($result->num_rows > 0) {
 } else {
     echo json_encode(["error" => "No bookings found."]);
 }
-$conn->close();
+$con->close();
 
 exit;

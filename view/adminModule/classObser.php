@@ -463,7 +463,7 @@ include "components/navBar.php";
                                         <button type="button" class="btn btn-primary next-step mx-2">Next</button>
                                         <button type="submit" name="classroomObservationSubmit"
                                             class="btn btn-success mx-2" style="display: none;"
-                                            onclick="  );">Submit</button>
+                                            onclick="">Submit</button>
                                     </div>
 
                                 </form>
@@ -555,6 +555,35 @@ include "components/navBar.php";
     </div>
 
 </section>
+<script>
+    $(document).ready(function () {
+        const form = $("#multi-step-form");
+
+        form.on("submit", function (event) {
+            let allRatingsCompleted = true;
+
+            $('input[type="radio"]').each(function () {
+                const name = $(this).attr('name');
+                const isChecked = $(`input[name='${name}']:checked`).length > 0;
+
+                if (!isChecked) {
+                    allRatingsCompleted = false;
+                    return false;
+                }
+            });
+            if (!allRatingsCompleted) {
+                event.preventDefault();
+                swal.fire({
+                    title: "Notice",
+                    text: "Please ensure that all ratings are completed before submitting the form.",
+                    icon: "warning",
+                    buttons: true,
+                    dangerMode: true,
+                });
+            }
+        });
+    });
+</script>
 
 
 <script>
@@ -576,7 +605,7 @@ include "components/navBar.php";
         if ($preferredScheduleSQL_query && mysqli_num_rows($preferredScheduleSQL_query) > 0) {
             while ($preferredScheduleRow = mysqli_fetch_assoc($preferredScheduleSQL_query)) {
                 ?>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    {
                     name: "<?php echo $preferredScheduleRow['first_name'] . ' ' . $preferredScheduleRow['last_name'] ?>",
                     facultyIdPo: "<?php echo $preferredScheduleRow['faculty_Id'] ?>",
                     schedule: {

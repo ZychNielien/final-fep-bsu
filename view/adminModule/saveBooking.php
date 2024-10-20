@@ -3,8 +3,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 session_start();
 
-$conn = new mysqli("localhost", "u789905971_herbert", "REyes0302", "u789905971_fepBsu");
-
+include "../../model/dbconnection.php";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $subject = $_POST['subject'];
@@ -17,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $evaluationStatus = 0;
     $isEvaluated = false;
 
-    $stmt = $conn->prepare("INSERT INTO bookings (name, course, room, selected_date, start_time, end_time, evaluation_status,slot,faculty_Id) VALUES (?, ?, ?, ?, ?, ?,?, ?,?)");
+    $stmt = $con->prepare("INSERT INTO bookings (name, course, room, selected_date, start_time, end_time, evaluation_status,slot,faculty_Id) VALUES (?, ?, ?, ?, ?, ?,?, ?,?)");
     $stmt->bind_param("ssssssssi", $name, $subject, $room, $selectedDate, $startTime, $endTime, $evaluationStatus, $slot, $idPO);
 
     if ($stmt->execute()) {
@@ -27,6 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $stmt->close();
-    $conn->close();
+    $con->close();
 }
 ?>

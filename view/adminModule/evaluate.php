@@ -476,6 +476,36 @@ include "../../model/dbconnection.php";
 
 </section>
 
+<script>
+    $(document).ready(function () {
+        const form = $("#multi-step-form");
+
+        form.on("submit", function (event) {
+            let allRatingsCompleted = true;
+
+            $('input[type="radio"]').each(function () {
+                const name = $(this).attr('name');
+                const isChecked = $(`input[name='${name}']:checked`).length > 0;
+
+                if (!isChecked) {
+                    allRatingsCompleted = false;
+                    return false;
+                }
+            });
+            if (!allRatingsCompleted) {
+                event.preventDefault();
+                swal.fire({
+                    title: "Notice",
+                    text: "Please ensure that all ratings are completed before submitting the form.",
+                    icon: "warning",
+                    buttons: true,
+                    dangerMode: true,
+                });
+            }
+        });
+    });
+</script>
+
 
 <script>
 
