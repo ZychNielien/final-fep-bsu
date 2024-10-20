@@ -1,5 +1,5 @@
 <?php
-$conn = new mysqli("localhost", "u789905971_herbert", "REyes0302", "u789905971_fepBsu");
+include "../../model/dbconnection.php";
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $response = ['success' => false];
 
     // Prepare the statement
-    if ($stmt = $conn->prepare($query)) {
+    if ($stmt = $con->prepare($query)) {
         // Bind the parameters
         $stmt->bind_param("si", $bookingId, $facultyId); // 's' for string, 'i' for integer
 
@@ -33,11 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Close the statement
         $stmt->close();
     } else {
-        $response['message'] = "Error preparing the statement: " . $conn->error;
+        $response['message'] = "Error preparing the statement: " . $con->error;
     }
 
     // Close the database connection
-    $conn->close();
+    $con->close();
 
     // Return the response in JSON format
     echo json_encode($response);

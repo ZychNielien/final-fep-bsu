@@ -13,7 +13,7 @@ $sqlSubject = "
     SELECT DISTINCT sf.semester, sf.academic_year 
     FROM peertopeerform sf
     WHERE sf.toFacultyID = '$FacultyID'
-    ORDER BY sf.semester DESC, sf.academic_year DESC
+    ORDER BY sf.academic_year DESC, sf.semester DESC 
     LIMIT 1
 ";
 

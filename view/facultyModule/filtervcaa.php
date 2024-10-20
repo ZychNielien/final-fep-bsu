@@ -129,7 +129,7 @@ if (!empty($selectedSemester)) {
     $sqlSubject .= " AND sf.semester = '$selectedSemester'";
 }
 
-$sqlSubject .= " GROUP BY s.subject, sf.semester, sf.academic_year ORDER BY sf.semester, sf.academic_year DESC";
+$sqlSubject .= " GROUP BY s.subject, sf.semester, sf.academic_year ORDER BY sf.academic_year DESC, sf.semester DESC ";
 
 $sqlSubject_query = mysqli_query($con, $sqlSubject);
 
