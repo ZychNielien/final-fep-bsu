@@ -14,6 +14,7 @@ $sqlSubject = "
     FROM peertopeerform sf
     WHERE sf.toFacultyID = '$FacultyID'
     ORDER BY sf.semester DESC, sf.academic_year DESC
+    LIMIT 1
 ";
 
 $sqlSubject_query = mysqli_query($con, $sqlSubject);
