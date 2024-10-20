@@ -349,7 +349,6 @@ if (!isset($_SESSION['studentSRCode'])) {
                           <?php
                         } else {
                           ?>
-
                           <td>
                             <button class="btn btn-secondary" disabled>Evaluated</button>
                           </td>

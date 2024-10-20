@@ -94,8 +94,8 @@ function sanitizeColumnName($name)
     return preg_replace('/[^a-zA-Z0-9_]/', '', trim($name));
 }
 
-$selectedSemester = isset($_POST['semester']) ? $_POST['semester'] : '';
-$selectedAcademicYear = isset($_POST['academic_year']) ? $_POST['academic_year'] : '';
+$selectedSemester = isset($_POST['semesterStudent']) ? $_POST['semesterStudent'] : '';
+$selectedAcademicYear = isset($_POST['academic_yearStudent']) ? $_POST['academic_yearStudent'] : '';
 
 $sqlSubject = "
     SELECT DISTINCT s.subject, 

@@ -175,9 +175,8 @@ ob_end_flush();
         height: 100%;
     }
 </style>
+
 <section class="contentContainer">
-
-
     <nav>
         <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
             <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home"
@@ -322,60 +321,99 @@ ob_end_flush();
                 </div>
                 <div class="modal-body">
 
-                    <div class="ulo d-flex flex-column">
-                        <?php
-                        $sqlSAY = "SELECT DISTINCT sf.semester, sf.academic_year
+                    <div style="min-height: 720px; width: 100%">
+                        <!-- NAVIGATION FOR TAB LIST -->
+                        <nav>
+                            <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
+                                <button class="nav-link active" id="nav-peertopeerHome-tab" data-bs-toggle="tab"
+                                    data-bs-target="#nav-peertopeerHome" type="button" role="tab"
+                                    aria-controls="nav-peertopeerHome" aria-selected="true">Peer to Peer
+                                    Evaluation Result</button>
+                                <button class="nav-link" id="nav-peertopeerFeedbacks-tab" data-bs-toggle="tab"
+                                    data-bs-target="#nav-peertopeerFeedbacks" type="button" role="tab"
+                                    aria-controls="nav-peertopeerFeedbacks" aria-selected="false">Peer to Peer
+                                    Evaluation Feedbacks</button>
+                            </div>
+                        </nav>
+
+                        <!-- CONTENT OF A TAB LIST -->
+                        <div class="tab-content p-3 border overflow-auto" id="nav-tabContent">
+
+                            <!-- TAB LIST FIRST TAB -->
+                            <div class="tab-pane fade active show" id="nav-peertopeerHome" role="tabpanel"
+                                aria-labelledby="nav-peertopeerHome-tab">
+
+                                <?php
+
+                                $FacultyID = $userRow['faculty_Id'];
+                                $sqlSAY = "SELECT DISTINCT  sf.semester, sf.academic_year 
                     FROM peertopeerform sf
-                    JOIN instructor i ON sf.toFacultyID = i.faculty_Id";
+                    JOIN instructor i ON sf.toFacultyID = i.faculty_Id
+                    WHERE i.faculty_Id = '$FacultyID'";
 
-                        $sqlSAY_query = mysqli_query($con, $sqlSAY);
+                                $sqlSAY_query = mysqli_query($con, $sqlSAY);
 
-                        $semesters = [];
-                        $academicYears = [];
+                                $semesters = [];
+                                $academicYears = [];
 
-                        while ($academicYearSemester = mysqli_fetch_assoc($sqlSAY_query)) {
-                            $semesters[] = $academicYearSemester['semester'];
-                            $academicYears[] = $academicYearSemester['academic_year'];
-                        }
+                                while ($academicYearSemester = mysqli_fetch_assoc($sqlSAY_query)) {
+                                    $semesters[] = $academicYearSemester['semester'];
+                                    $academicYears[] = $academicYearSemester['academic_year'];
+                                }
 
-                        $selectedSemester = isset($_POST['semester']) ? $_POST['semester'] : '';
-                        $selectedAcademicYear = isset($_POST['academic_year']) ? $_POST['academic_year'] : '';
+                                $selectedSemester = isset($_POST['semester']) ? $_POST['semester'] : '';
+                                $selectedAcademicYear = isset($_POST['academic_year']) ? $_POST['academic_year'] : '';
 
-                        ?>
+                                ?>
 
-                        <!-- FILTER FOR SEMESTER AND ACADEMIC YEAR -->
-                        <form method="POST" action=""
-                            class="mb-4 d-flex justify-content-evenly align-items-center text-center">
-                            <div class="mb-3">
-                                <label for="academic_year" class="form-label">Academic Year:</label>
-                                <select id="academic_year" name="academic_year" class="form-select">
-                                    <option value="">Select Academic Year</option>
-                                    <?php foreach (array_unique($academicYears) as $year): ?>
-                                        <option value="<?php echo $year; ?>"><?php echo $year; ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <!-- FILTER FOR SEMESTER AND ACADEMIC YEAR -->
+                                <form method="POST" action=""
+                                    class="mb-4 d-flex justify-content-evenly align-items-center text-center">
+                                    <div class="mb-3">
+                                        <label for="academic_year" class="form-label">Academic Year:</label>
+                                        <select id="academic_year" name="academic_year" class="form-select">
+                                            <option value="">Select Academic Year</option>
+                                            <?php foreach (array_unique($academicYears) as $year): ?>
+                                                <option value="<?php echo $year; ?>"><?php echo $year; ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="semester" class="form-label">Semester:</label>
+                                        <select id="semester" name="semester" class="form-select">
+                                            <option value="">Select Semester</option>
+                                            <?php foreach (array_unique($semesters) as $semester): ?>
+                                                <option value="<?php echo $semester; ?>"><?php echo $semester; ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <button type="button" class="btn btn-success"
+                                            onclick="printPartOfPage('result')">Print
+                                            Content</button>
+                                    </div>
+                                </form>
+
+                                <div class="overflow-auto" style="max-height: 520px">
+                                    <!-- RESULT OF DATA FROM THE STUDENTS EVALUATION -->
+                                    <div id="result"></div>
+                                </div>
+
                             </div>
-                            <div class="mb-3">
-                                <label for="semester" class="form-label">Semester:</label>
-                                <select id="semester" name="semester" class="form-select">
-                                    <option value="">Select Semester</option>
-                                    <?php foreach (array_unique($semesters) as $semester): ?>
-                                        <option value="<?php echo $semester; ?>"><?php echo $semester; ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+
+                            <!-- TAB LIST SECOND TAB -->
+                            <div class="tab-pane fade" id="nav-peertopeerFeedbacks" role="tabpanel"
+                                aria-labelledby="nav-peertopeerFeedbacks-tab">
+                                <div id="ratings-container"></div>
+
+                                <input type="hidden" id="facultyIdField" name="facultyIdFieldstudent">
                             </div>
-                        </form>
-
-
-                        <input type="hidden" id="facultyIdField" name="facultyIdField">
-                        <div class="overflow-auto" style="max-height: 520px; width: 1000px;">
-                            <!-- RESULT OF DATA FROM THE STUDENTS EVALUATION -->
-                            <div id="result"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -387,63 +425,77 @@ ob_end_flush();
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="studentEvaluationLabel">Faculty Development Evaluation Result of <span
-                            id="facultyNameFieldstudent" class="fw-bold"></span></h5>
+                    <h5 class="modal-title" id="studentEvaluationLabel">Faculty Development Evaluation Result of
+                        <span id="facultyNameFieldstudent" class="fw-bold"></span>
+                    </h5>
                     <button type="button" class="btn-close bg-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
 
-                    <div class="ulo d-flex flex-column">
-                        <?php
-                        $sqlSAY = "SELECT DISTINCT sf.semester, sf.academic_year
+                    <div style="min-height: 720px; width: 100%">
+                        <!-- NAVIGATION FOR TAB LIST -->
+                        <nav>
+                            <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
+                                <button class="nav-link active" id="nav-studentEvaluationHome-tab" data-bs-toggle="tab"
+                                    data-bs-target="#nav-studentEvaluationHome" type="button" role="tab"
+                                    aria-controls="nav-studentEvaluationHome" aria-selected="true">Faculty Development
+                                    Evaluation Result</button>
+                                <button class="nav-link" id="nav-studentEvaluationFeedbacks-tab" data-bs-toggle="tab"
+                                    data-bs-target="#nav-studentEvaluationFeedbacks" type="button" role="tab"
+                                    aria-controls="nav-studentEvaluationFeedbacks" aria-selected="false">Faculty
+                                    Development Evaluation Result Feedbacks</button>
+                            </div>
+                        </nav>
+
+                        <!-- CONTENT OF A TAB LIST -->
+                        <div class="tab-content p-3 border overflow-auto" id="nav-tabContent">
+
+                            <!-- TAB LIST FIRST TAB -->
+                            <div class="tab-pane fade active show" id="nav-studentEvaluationHome" role="tabpanel"
+                                aria-labelledby="nav-studentEvaluationHome-tab">
+
+                                <div class="ulo d-flex flex-column">
+                                    <?php
+                                    $sqlSAY = "SELECT DISTINCT sf.semester, sf.academic_year
                     FROM studentsform sf
                     JOIN instructor i ON sf.toFacultyID = i.faculty_Id";
 
-                        $sqlSAY_query = mysqli_query($con, $sqlSAY);
+                                    $sqlSAY_query = mysqli_query($con, $sqlSAY);
 
-                        $semesters = [];
-                        $academicYears = [];
+                                    $semesters = [];
+                                    $academicYears = [];
 
-                        while ($academicYearSemester = mysqli_fetch_assoc($sqlSAY_query)) {
-                            $semesters[] = $academicYearSemester['semester'];
-                            $academicYears[] = $academicYearSemester['academic_year'];
-                        }
+                                    while ($academicYearSemester = mysqli_fetch_assoc($sqlSAY_query)) {
+                                        $semesters[] = $academicYearSemester['semester'];
+                                        $academicYears[] = $academicYearSemester['academic_year'];
+                                    }
 
-                        $selectedSemester = isset($_POST['semester']) ? $_POST['semester'] : '';
-                        $selectedAcademicYear = isset($_POST['academic_year']) ? $_POST['academic_year'] : '';
+                                    $selectedSemester = isset($_POST['semester']) ? $_POST['semester'] : '';
+                                    $selectedAcademicYear = isset($_POST['academic_year']) ? $_POST['academic_year'] : '';
 
-                        ?>
+                                    ?>
 
-                        <!-- FILTER FOR SEMESTER AND ACADEMIC YEAR -->
-                        <form method="POST" action=""
-                            class="mb-4 d-flex justify-content-evenly align-items-center text-center">
-                            <div class="mb-3">
-                                <label for="academic_year" class="form-label">Academic Year:</label>
-                                <select id="academic_year" name="academic_year" class="form-select">
-                                    <option value="">Select Academic Year</option>
-                                    <?php foreach (array_unique($academicYears) as $year): ?>
-                                        <option value="<?php echo $year; ?>"><?php echo $year; ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+
+
+                                    <input type="hidden" id="facultyIdFieldstudent" name="facultyIdFieldstudent">
+
+                                    <!-- RESULT OF DATA FROM THE STUDENTS EVALUATION -->
+                                    <div id="resultStudent"></div>
+
+                                </div>
+
                             </div>
-                            <div class="mb-3">
-                                <label for="semester" class="form-label">Semester:</label>
-                                <select id="semester" name="semester" class="form-select">
-                                    <option value="">Select Semester</option>
-                                    <?php foreach (array_unique($semesters) as $semester): ?>
-                                        <option value="<?php echo $semester; ?>"><?php echo $semester; ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+
+                            <!-- TAB LIST SECOND TAB -->
+                            <div class="tab-pane fade" id="nav-studentEvaluationFeedbacks" role="tabpanel"
+                                aria-labelledby="nav-studentEvaluationFeedbacks-tab">
+
+                                <div id="studentsRatings-container"></div>
+
                             </div>
-                        </form>
-
-
-                        <input type="hidden" id="facultyIdFieldstudent" name="facultyIdFieldstudent">
-                        <div class="overflow-auto" style="max-height: 520px; width: 1000px;">
-                            <!-- RESULT OF DATA FROM THE STUDENTS EVALUATION -->
-                            <div id="resultStudent"></div>
                         </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -451,8 +503,6 @@ ob_end_flush();
                 </div>
             </div>
         </div>
-    </div>
-
     </div>
 
 
@@ -502,11 +552,53 @@ ob_end_flush();
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
 <script>
+    function fetchRatings() {
+        const faculty_Id = $('#facultyIdField').val();
+
+
+        $.ajax({
+            url: 'vcaapeertopeer.php',
+            method: 'POST',
+            data: {
+                faculty_Id: faculty_Id,
+
+            },
+            success: function (response) {
+                $('#ratings-container').html(response);
+            }
+        });
+
+
+    }
+
+    function fetchStudentsRatings() {
+        const faculty_Id = $('#facultyIdFieldstudent').val();
+
+
+        $.ajax({
+            url: 'vcaastudents.php',
+            method: 'POST',
+            data: {
+                faculty_Id: faculty_Id,
+
+            },
+            success: function (response) {
+                $('#studentsRatings-container').html(response);
+            }
+        });
+
+
+    }
+
+</script>
+
+<script>
     let averageChart;
 
     $(document).ready(function () {
         fetchFilteredResults();
-
+        fetchRatings();
+        fetchStudentsRatings();
         $('#academic_year, #semester').change(function () {
             fetchFilteredResults();
         });
@@ -515,7 +607,8 @@ ob_end_flush();
             var facultyName = $(this).data('name');
             $('#facultyIdField').val(facultyID);
             $('#facultyNameField').text(facultyName);
-
+            // Fetch ratings on page load
+            fetchRatings();
             fetchFilteredResults();
         });
 
@@ -525,7 +618,7 @@ ob_end_flush();
 
             $('#facultyIdFieldstudent').val(facultyIDstudent);
             $('#facultyNameFieldstudent').text(facultyNamestudent);
-
+            fetchStudentsRatings();
             fetchFilteredStudentResults();
         });
 
@@ -563,8 +656,8 @@ ob_end_flush();
         }
 
         function fetchFilteredStudentResults() {
-            var semester = $('#semester').val();
-            var academicYear = $('#academic_year').val();
+            var semesterStudent = $('#semesterStudent').val();
+            var academicYearStudent = $('#academic_yearStudent').val();
             var facultyID = $('#facultyIdFieldstudent').val();
 
             if (semester === '' && academicYear === '') {
@@ -584,8 +677,8 @@ ob_end_flush();
                     type: 'POST',
                     url: 'filterStudentResults.php',
                     data: {
-                        semester: semester,
-                        academic_year: academicYear,
+                        semesterStudent: semesterStudent,
+                        academic_yearStudent: academicYearStudent,
                         facultyID: facultyID
                     },
                     success: function (data) {
