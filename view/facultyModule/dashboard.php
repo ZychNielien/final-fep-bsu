@@ -547,7 +547,6 @@ $semestersJson = json_encode($semesters);
 
     <script>
 
-
         var averageRating = <?php echo json_encode($average); ?>;
 
         if (typeof averageRating !== 'number' || isNaN(averageRating)) {
@@ -616,7 +615,6 @@ $semestersJson = json_encode($semesters);
             }]
 
         });
-
     </script>
 
     <script>

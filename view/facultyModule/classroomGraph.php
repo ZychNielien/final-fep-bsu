@@ -43,8 +43,6 @@ if (!$sqlSubject_query) {
 }
 
 $finalAveragesPerSemester = [];
-$semesterLabels = [];
-$finalAverageRatings = [];
 
 if (mysqli_num_rows($sqlSubject_query) > 0) {
     while ($subject = mysqli_fetch_assoc($sqlSubject_query)) {
@@ -103,7 +101,6 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
         if ($categoryCount > 0) {
             $finalAverageRating = $totalAverage / $categoryCount;
 
-            // Push data for JSON response
             $finalAveragesPerSemester[] = [
                 'semester' => $selectedSemester,
                 'academic_year' => $selectedAcademicYear,
@@ -111,7 +108,9 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
             ];
         }
     }
-
-    echo json_encode($finalAveragesPerSemester);
 }
+
+// Ensure valid JSON output
+echo json_encode($finalAveragesPerSemester ? $finalAveragesPerSemester : []);
+
 ?>
