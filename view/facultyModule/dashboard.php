@@ -1,13 +1,8 @@
 <?php
 include "components/navBar.php";
-require '../../vendor/autoload.php';
-use PhpOffice\PhpSpreadsheet\IOFactory;
+
 include "../../model/dbconnection.php";
 
-function sanitizeColumnName($name)
-{
-    return preg_replace('/[^a-zA-Z0-9_]/', '', trim($name));
-}
 
 $sqlSAY = "SELECT * FROM `academic_year_semester`";
 $sqlSAY_query = mysqli_query($con, $sqlSAY);
@@ -15,72 +10,6 @@ $SAY = mysqli_fetch_assoc($sqlSAY_query);
 
 $nowSemester = $SAY['semester'];
 $nowAcademicYear = $SAY['academic_year'];
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['excel_file'])) {
-    if ($_FILES['excel_file']['error'] == 0) {
-        $fileTmpPath = $_FILES['excel_file']['tmp_name'];
-        $originalFileName = $_FILES['excel_file']['name'];
-        $uniqueFileName = time() . '_' . $originalFileName;
-        $destinationPath = '../../public/excelFiles/' . $uniqueFileName;
-
-        $fileExtension = pathinfo($originalFileName, PATHINFO_EXTENSION);
-        if (!in_array($fileExtension, ['xls', 'xlsx'])) {
-            $message = "Invalid file type. Only Excel files (.xls, .xlsx) are allowed.";
-        } elseif (
-            !in_array(mime_content_type($fileTmpPath), [
-                'application/vnd.ms-excel',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            ])
-        ) {
-            $message = "Invalid file type. Only Excel files (.xls, .xlsx) are allowed.";
-        } else {
-            $userId = $userRow['faculty_Id'];
-            $result = $con->query("SELECT file_name, id FROM vcaaexcel WHERE faculty_Id = '$userId' AND semester = '$nowSemester' AND academic_year = '$nowAcademicYear' LIMIT 1");
-
-            if ($row = $result->fetch_assoc()) {
-                $oldFileName = $row['file_name'];
-                $recordId = $row['id'];
-
-                if (file_exists('../../public/excelFiles/' . $oldFileName)) {
-                    unlink('../../public/excelFiles/' . $oldFileName);
-                }
-            }
-
-            if (move_uploaded_file($fileTmpPath, $destinationPath)) {
-                try {
-                    $spreadsheet = IOFactory::load($destinationPath);
-                    $sheet = $spreadsheet->getActiveSheet();
-                    $cellValue = $sheet->getCell('D50')->getCalculatedValue();
-
-                    if ($cellValue !== null && $cellValue !== '') {
-                        if (isset($recordId)) {
-                            $stmt = $con->prepare("UPDATE vcaaexcel SET file_name = ?, cell_value = ? WHERE id = ? AND semester = ? AND academic_year = ?");
-                            $stmt->bind_param("ssiis", $uniqueFileName, $cellValue, $recordId, $nowSemester, $nowAcademicYear);
-                        } else {
-                            $stmt = $con->prepare("INSERT INTO vcaaexcel (file_name, cell_value, faculty_Id, semester, academic_year) VALUES (?, ?, ?, ?, ?)");
-                            $stmt->bind_param("ssiss", $uniqueFileName, $cellValue, $userId, $nowSemester, $nowAcademicYear);
-                        }
-
-                        if ($stmt->execute()) {
-                            $message = "Your VCAA has been successfully " . (isset($recordId) ? "updated." : "uploaded.");
-                        } else {
-                            $message = "Error: " . $stmt->error;
-                        }
-                        $stmt->close();
-                    } else {
-                        $message = "Cell value is empty. Data not saved to the database.";
-                    }
-                } catch (Exception $e) {
-                    $message = "Error loading file: " . $e->getMessage();
-                }
-            } else {
-                $message = "Error saving the uploaded file.";
-            }
-        }
-    } else {
-        $message = "Please upload a valid Excel file.";
-    }
-}
 
 $userId = $userRow['faculty_Id'];
 $result = $con->query("SELECT cell_value FROM vcaaexcel WHERE faculty_Id = '$userId' AND semester = '$nowSemester' AND academic_year = '$nowAcademicYear' LIMIT 1");
@@ -91,7 +20,10 @@ if ($result && mysqli_num_rows($result) > 0) {
 } else {
     $average = 0;
 }
-
+function sanitizeColumnName($name)
+{
+    return preg_replace('/[^a-zA-Z0-9_]/', '', trim($name));
+}
 function getFinalAverageRating($facultyID, $semester, $academic_year, $selectedSubject, $con)
 {
     $totalAverage = 0;
@@ -190,7 +122,7 @@ while ($subject = mysqli_fetch_assoc($sqlSubject_query)) {
 }
 
 $faculty_Id = mysqli_real_escape_string($con, $_SESSION["userid"]);
-$sql = "SELECT subject, combined_average, semester, academic_year FROM faculty_averages WHERE faculty_Id = '$faculty_Id' ORDER BY academic_year, semester";
+$sql = "SELECT subject, combined_average, semester, academic_year FROM faculty_averages WHERE faculty_Id = '$faculty_Id' ORDER BY academic_year, semester ";
 $result = mysqli_query($con, $sql);
 
 $semesters = [];
@@ -223,7 +155,6 @@ while ($row = mysqli_fetch_assoc($result)) {
 $subjectsJson = json_encode(array_keys($subjectData));
 $subjectDataJson = json_encode($subjectData);
 $semestersJson = json_encode($semesters);
-
 ?>
 
 <!DOCTYPE html>
@@ -371,6 +302,18 @@ $semestersJson = json_encode($semesters);
 
             </div>
 
+
+
+        </div>
+        <div class="graphContainer d-flex justify-content-evenly align-items-center my-5">
+            <div class="chart-container  justify-content-center">
+                <h3 class="text-center">Latest Peer to Peer Evaluation Results</h3>
+                <canvas id="averageRatingChart" style="min-height: 350px;"></canvas>
+            </div>
+            <div class="chart-container  justify-content-center">
+                <h3 class="text-center">Latest Classroom Evaluation Results</h3>
+                <canvas id="finalAverageChart" style="min-height: 350px;"></canvas>
+            </div>
         </div>
 
         <div class="modal fade" id="vcaaResults" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
@@ -449,8 +392,101 @@ $semestersJson = json_encode($semesters);
     </section>
 
     <script src="../../public/js/chart.js"></script>
+    <script src="../../public/js/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
+    <script>
+        $(document).ready(function () {
+            // Fetch the data using jQuery AJAX
+            $.ajax({
+                url: 'classroomGraph.php', // Update with the actual path to your PHP file
+                method: 'POST',
+                dataType: 'json',
+                success: function (response) {
+                    // Prepare the data for the chart
+                    var labels = [];
+                    var data = [];
+
+                    $.each(response, function (index, value) {
+                        labels.push(value.semester + ' ' + value.academic_year);
+                        data.push(value.finalAverageRating);
+                    });
+
+                    // Render the chart using Chart.js
+                    var ctx = document.getElementById('finalAverageChart').getContext('2d');
+                    var finalAverageChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Final Average Rating',
+                                data: data,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 2,
+                                fill: false
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 5
+                                }
+                            }
+                        }
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching data: ' + error);
+                }
+            });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            // Show loading indicator
+            $('#loading').show();
+
+            $.ajax({
+                url: 'peerToPeerGraph.php',
+                type: 'GET',
+                dataType: 'json',
+                success: function (categoriesData) {
+                    // Hide loading indicator
+                    $('#loading').hide();
+
+                    const peerToPeerctx = document.getElementById('averageRatingChart').getContext('2d');
+                    const colors = Object.keys(categoriesData).map(() => {
+                        // Generate random colors for each bar
+                        return `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() *
+                            255)}, 0.6)`;
+                    });
+
+                    const chart = new Chart(peerToPeerctx, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(categoriesData), // Category names
+                            datasets: [{
+                                label: 'Average Ratings',
+                                data: Object.values(categoriesData), // Average ratings
+                                backgroundColor: colors,
+                                borderColor: colors.map(color => color.replace('0.6', '1')), // Use darker colors for borders
+                                borderWidth: 1
+                            }]
+                        },
+
+                    });
+                },
+                error: function (xhr, status, error) {
+                    // Hide loading indicator and show error message
+                    $('#loading').hide();
+                    console.error("AJAX Error: ", status, error);
+                    alert("An error occurred while fetching data. Please try again later.");
+                }
+            });
+        });
+    </script>
 
     <script>
         function printPartOfPage(elementId) {
@@ -510,7 +546,6 @@ $semestersJson = json_encode($semesters);
     </script>
 
     <script>
-
 
         var averageRating = <?php echo json_encode($average); ?>;
 
@@ -580,7 +615,6 @@ $semestersJson = json_encode($semesters);
             }]
 
         });
-
     </script>
 
     <script>
@@ -699,8 +733,8 @@ $semestersJson = json_encode($semesters);
         filterEndSemesters();
         document.getElementById('endSemesterFilter').value = semesters[semesters.length - 1];
         updateCharts();
-    </script>
 
+    </script>
 
     <script src="../../bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="../../public/js/sweetalert2@11.js"></script>
@@ -777,7 +811,7 @@ $semestersJson = json_encode($semesters);
             }
 
             $('#printBtn').click(function () {
-                printPartOfPage('lineChart');
+                printPartOfPage('barChart');
             });
         });
 

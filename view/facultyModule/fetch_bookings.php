@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Fetch bookings for the selected date
     $query = "SELECT start_time, end_time, slot FROM bookings WHERE selected_date = ?";
-    $stmt = $conn->prepare($query);
+    $stmt = $con->prepare($query);
     $stmt->bind_param("s", $selectedDate);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -25,10 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     echo json_encode($bookedSlots);
 }
 
-$conn = new mysqli("localhost", "root", "", "final-fep-bsu");
+include "../../model/dbconnection.php";
 
 $sql = "SELECT * FROM bookings";
-$result = $conn->query($sql);
+$result = $con->query($sql);
 
 if ($result->num_rows > 0) {
     $bookings = [];
@@ -40,6 +40,6 @@ if ($result->num_rows > 0) {
 } else {
     echo json_encode(["error" => "No bookings found."]);
 }
-$conn->close();
+$con->close();
 
 exit;

@@ -1,67 +1,74 @@
-<head>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-</head>
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<body>
-    <h5 id="semester"></h5>
-    <h5 id="academicYear"></h5>
+<canvas id="averageRatingChart" width="400" height="200"></canvas>
 
-    <div style="max-height: 500px; max-width: 500px;">
-        <canvas id="averageRatingChart" max-width="500" max-height="500"></canvas>
-    </div>
-
-    <script>
-        $(document).ready(function () {
-            $.ajax({
-                url: 'peerToPeerGraph.php',
-                type: 'GET',
-                dataType: 'json',
-                success: function (categoriesData) {
-                    const peerToPeerctx = document.getElementById('averageRatingChart').getContext('2d');
-                    const chart = new Chart(peerToPeerctx, {
-                        type: 'bar',
-                        data: {
-                            labels: Object.keys(categoriesData), // Category names
-                            datasets: [{
-                                label: 'Average Ratings',
-                                data: Object.values(categoriesData), // Average ratings
-                                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                                borderColor: 'rgba(75, 192, 192, 1)',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    max: 5, // Set max to 5
-                                    title: {
-                                        display: true,
-                                        text: 'Average Rating'
-                                    }
-                                },
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: 'Categories'
-                                    }
-                                }
-                            },
-                            responsive: true,
-                            plugins: {
-                                legend: {
-                                    display: true,
-                                    position: 'top',
-                                },
-                            }
-                        }
-                    });
-                },
-                error: function (xhr, status, error) {
-                    console.error("AJAX Error: ", status, error);
+<script>
+    function fetchAverageRatings() {
+        $.ajax({
+            url: '.php', // Your PHP file to fetch data
+            type: 'POST',
+            data: {
+                semester: $('#semesterSelect').val(), // Assuming you have a select for semester
+                academic_year: $('#academicYearSelect').val() // Assuming you have a select for academic year
+            },
+            dataType: 'json',
+            success: function (response) {
+                if (response.subjects && response.averageRatings) {
+                    updateChart(response.subjects, response.averageRatings);
+                } else {
+                    console.error('No data returned or invalid response format');
                 }
-            });
+            },
+            error: function (xhr, status, error) {
+                console.error("AJAX Error: ", status, error);
+            }
         });
-    </script>
-</body>
+    }
+
+    function updateChart(subjects, averageRatings) {
+        const ctx = document.getElementById('averageRatingChart').getContext('2d');
+        const averageRatingChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: subjects,
+                datasets: [{
+                    label: 'Final Average Ratings',
+                    data: averageRatings,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Average Rating'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Subjects'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Call the function on page load or specific events (like button click)
+    $(document).ready(function () {
+        fetchAverageRatings(); // Fetch and display data when the page loads
+
+        // Optionally, you can call fetchAverageRatings() when the semester or academic year changes.
+        $('#semesterSelect, #academicYearSelect').change(function () {
+            fetchAverageRatings();
+        });
+    });
+</script>
