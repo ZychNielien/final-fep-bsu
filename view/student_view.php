@@ -101,16 +101,18 @@ if (!isset($_SESSION['studentSRCode'])) {
           <h2 id="firstname"></h2>
         </div>
       </div>
-      <div>
-        <div class="row row">
+      <div class="me-5">
+        <div class="row">
           <div class="col">
             <p class="fw-bold">
               <i class="fa-solid fa-play text-muted"></i> <span id="course"></span> - <span id="year"></span> YEAR
             </p>
           </div>
-          <div class="col-10">
+        </div>
+          <div class="row">
+          <div class="col">
             <p class="fw-bold">
-              <i class="fa-solid fa-play text-muted"></i> <span id="semester"></span>
+              <i class="fa-solid fa-play text-muted"></i> <span id="semester"></span> <span> - SEMESTER</span>
             </p>
           </div>
         </div>
@@ -211,16 +213,17 @@ if (!isset($_SESSION['studentSRCode'])) {
           <h6 style="font-family: monospace;" class="px-2">Online
             Registration<br>for <span id="getSem2"></span> Semester</h6 style="font-family: monospace;">
         </button>
-
-
-
-
-
+      </div>
+      <div id="UpdateYearOrSem">
+        <button class="btn btn-success d-flex align-items-center" id="UpdateYS">
+          <h2><i class="fa-solid fa-user-pen"></i></h2>
+            <h6 style="font-family: monospace;" class="px-2">Update My Status</h6>
+        </button>
       </div>
       <h1 style="display: none;"><?php echo $_SESSION['studentSRCode'] ?></h1>
       <div id="major">
         <button class="btn btn-success d-flex align-items-center" data-bs-target="#major_modal" data-bs-toggle="modal">
-          <h2><i class="fa-solid fa-graduation-cap"></i>
+          <h2><i class="fa-solid fa-graduation-cap"></i></h2>
             <h6 style="font-family: monospace;" class="px-2">Choose A Major</h6>
         </button>
       </div>
@@ -364,7 +367,7 @@ if (!isset($_SESSION['studentSRCode'])) {
               } else {
                 ?>
                 <tr>
-                  <td colspan="6">No Enrolled Subject!</td>
+                  <td colspan="7">No Enrolled Subject!</td>
                 </tr>
                 <?php
               }
