@@ -147,6 +147,98 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
             </div>
         </div>
 
+        <div class="d-flex justify-content-evenly align-items-center my-2">
+            <?php
+            $subjectPo = $subject['subject'];
+            $subjectSemester = $subject['semester'];
+            $subjectAcademicYear = $subject['academic_year'];
+
+            $countSQL = "SELECT s.section, COUNT(*) AS count 
+             FROM complete_subject cs 
+             JOIN section s ON cs.section_Id = s.id 
+             JOIN subject sj ON cs.subject_id = sj.subject_id 
+             WHERE cs.faculty_id = '$userId' 
+             AND cs.semester = '$subjectSemester' 
+             AND cs.academic_year = '$subjectAcademicYear'
+             AND sj.subject = '$subjectPo'
+             GROUP BY s.section";
+
+            $countSQL_query = mysqli_query($con, $countSQL);
+
+            if ($countSQL_query) {
+                while ($countSQLRow = mysqli_fetch_assoc($countSQL_query)) {
+
+                    $fromForm = "SELECT COUNT(*) as count 
+                     FROM studentsform 
+                     WHERE toFacultyID = '$userId' 
+                     AND subject = '$subjectPo' 
+                     AND semester = '$subjectSemester' 
+                     AND academic_year = '$subjectAcademicYear'
+                     AND studentSection = '{$countSQLRow['section']}'";
+                    $fromForm_query = mysqli_query($con, $fromForm);
+
+                    while ($fromFormRow = mysqli_fetch_assoc(result: $fromForm_query)) {
+
+                        ?>
+                        <h5><?php echo $countSQLRow['section'] . ' - ' . $fromFormRow['count']; ?> / <?php echo $countSQLRow['count']; ?>
+                        </h5>
+                        <?php
+                    }
+                }
+            } else {
+
+                echo "Error: " . mysqli_error($con);
+            }
+            ?>
+        </div>
+
+        <div class="d-flex justify-content-center align-items-center mb-2">
+            <?php
+            $subjectPo = $subject['subject'];
+            $subjectSemester = $subject['semester'];
+            $subjectAcademicYear = $subject['academic_year'];
+
+            $countAllSQL = "SELECT COUNT(*) AS count 
+             FROM complete_subject cs 
+             JOIN section s ON cs.section_Id = s.id 
+             JOIN subject sj ON cs.subject_id = sj.subject_id 
+             WHERE cs.faculty_id = '$userId' 
+             AND cs.semester = '$subjectSemester' 
+             AND cs.academic_year = '$subjectAcademicYear'
+             AND sj.subject = '$subjectPo'";
+
+            $countAllSQL_query = mysqli_query($con, $countAllSQL);
+
+            if ($countAllSQL_query) {
+                while ($countAllSQLRow = mysqli_fetch_assoc($countAllSQL_query)) {
+
+                    $fromForm = "SELECT COUNT(*) as count 
+                     FROM studentsform 
+                     WHERE toFacultyID = '$userId' 
+                     AND subject = '$subjectPo' 
+                     AND semester = '$subjectSemester' 
+                     AND academic_year = '$subjectAcademicYear'"; // Add section filter here
+                    $fromForm_query = mysqli_query($con, $fromForm);
+
+                    while ($fromFormRow = mysqli_fetch_assoc(result: $fromForm_query)) {
+                        // Output the section and counts for each section
+                        ?>
+                        <h5>The total number of students who evaluated the faculty: <span class="fw-bold">
+                                <?php echo $fromFormRow['count']; ?> /
+                                <?php echo $countAllSQLRow['count']; ?>
+                            </span>
+                        </h5>
+                        <?php
+                    }
+                }
+            } else {
+                // Handle case if query fails
+                echo "Error: " . mysqli_error($con);
+            }
+            ?>
+        </div>
+
+
         <table class="table table-striped table-bordered text-center align-middle mb-5">
             <thead>
                 <tr style="background: #d0112b; color: #fff;">

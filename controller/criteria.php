@@ -696,11 +696,10 @@ if (isset($_POST['classroomObservationSubmit'])) {
             if (mysqli_stmt_execute($stmt)) {
                 // Successful insertion, now update bookings
                 $update_SQL = "UPDATE `bookings` 
-                                   SET evaluation_status = 1 
-                                   WHERE faculty_Id = ? AND course = ? AND slot = ? AND selected_date = ? AND start_time = ? AND end_time = ?";
+                SET evaluation_status = 1 
+                WHERE faculty_Id = ? AND course = ? AND slot = ? AND selected_date = ? AND start_time = ? AND end_time = ?";
 
                 if ($update_stmt = mysqli_prepare($con, $update_SQL)) {
-                    // Bind parameters for the update
                     mysqli_stmt_bind_param($update_stmt, 'isssss', $toFacultyID, $courseTitle, $bookedSlot, $bookedSelectedDate, $bookedStartTime, $bookedEndTime);
 
                     if (mysqli_stmt_execute($update_stmt)) {
@@ -720,11 +719,11 @@ if (isset($_POST['classroomObservationSubmit'])) {
                 $_SESSION['status'] = "Error Classroom Observation: " . mysqli_stmt_error($stmt);
                 $_SESSION['status-code'] = "error";
             }
-
+            mysqli_stmt_close($stmt);
             exit;
 
 
-            mysqli_stmt_close($stmt);
+
         } else {
             $_SESSION['status'] = "Failed to prepare SQL statement: " . mysqli_error($con);
             $_SESSION['status-code'] = "error";
@@ -752,10 +751,11 @@ if (isset($_POST['studentSubmit'])) {
     $enrolled = isset($_POST['enrolled']) ? trim($_POST['enrolled']) : '';
     $subject = isset($_POST['subject']) ? trim($_POST['subject']) : '';
     $srcode = isset($_POST['srcode']) ? trim($_POST['srcode']) : '';
+    $studentSection = isset($_POST['studentSection']) ? trim($_POST['studentSection']) : '';
 
     foreach ($_POST as $key => $value) {
 
-        if ($key !== 'studentSubmit' && $key !== 'toFaculty' && $key !== 'toFacultyID' && $key !== 'fromStudents' && $key !== 'fromStudentID' && $key !== 'semester' && $key !== 'academic_year' && $key !== 'date' && $key !== 'comment' && $key !== 'enrolled' && $key !== 'subject' && $key !== 'srcode') { // Exclude these keys
+        if ($key !== 'studentSubmit' && $key !== 'toFaculty' && $key !== 'toFacultyID' && $key !== 'fromStudents' && $key !== 'fromStudentID' && $key !== 'semester' && $key !== 'academic_year' && $key !== 'date' && $key !== 'comment' && $key !== 'enrolled' && $key !== 'subject' && $key !== 'srcode' && $key !== 'studentSection') { // Exclude these keys
 
             $cleanKey = str_replace('_', '', trim($key));
             $cleanValue = trim($value);
@@ -767,11 +767,14 @@ if (isset($_POST['studentSubmit'])) {
         }
     }
 
-
+    $sqlSection = "SELECT section_id FROM `enrolled_subject` WHERE sr_code = '$srcode' AND subject_id = '$subject'";
+    $sqlSection_query = mysqli_query($con, $sqlSection);
+    $studentSectionRow = mysqli_fetch_assoc($sqlSection_query);
+    $sectionNya = $studentSectionRow['section_id'];
 
     if (!empty($columns) && !empty($values)) {
 
-        $sql = "INSERT INTO `studentsform` (" . implode(", ", $columns) . ", toFaculty, toFacultyID, fromStudents, fromStudentID, semester, academic_year, date,comment, subject) VALUES ('" . implode("', '", $values) . "', '$toFaculty', '$toFacultyID', '$fromStudents', '$fromStudentID', '$semester', '$academic_year', '$date','$comment','$subject')";
+        $sql = "INSERT INTO `studentsform` (" . implode(", ", $columns) . ", toFaculty, toFacultyID, fromStudents, fromStudentID, semester, academic_year, date,comment, subject,srcode, studentSection) VALUES ('" . implode("', '", $values) . "', '$toFaculty', '$toFacultyID', '$fromStudents', '$fromStudentID', '$semester', '$academic_year', '$date','$comment','$subject','$srcode','$sectionNya')";
 
 
         if (mysqli_query($con, $sql)) {
@@ -780,10 +783,10 @@ if (isset($_POST['studentSubmit'])) {
 
             if ($SQLUpdate_query) {
 
-                $query_complete = "INSERT INTO complete_subject (subject_id, faculty_id, sr_code, section_id) 
+                $query_complete = "INSERT INTO complete_subject (subject_id, faculty_id, sr_code, section_id, semester,academic_year) 
                                         VALUES 
                                     ((SELECT subject_id FROM subject WHERE subject = '$subject'), '$toFacultyID', '$srcode',
-                                    (SELECT section_id FROM `enrolled_student` WHERE sr_code = '$srcode' AND subject_id = (SELECT subject_id FROM subject WHERE subject = '$subject')))";
+                                    (SELECT section_id FROM `enrolled_student` WHERE sr_code = '$srcode' AND subject_id = (SELECT subject_id FROM subject WHERE subject = '$subject')) , '$semester','$academic_year')";
 
                 $query_complete_run = mysqli_query($con, $query_complete);
 

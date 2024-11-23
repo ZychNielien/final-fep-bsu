@@ -15,20 +15,35 @@ if (isset($_POST['studentLogin'])) {
     $sql_query = mysqli_query($con, $sql);
 
     if ($sql_query) {
+
         $numrows = mysqli_num_rows($sql_query);
         if ($numrows == 1) {
-            $_SESSION['status'] = "Login Successfully";
-            $_SESSION['status-code'] = "success";
             while ($row = mysqli_fetch_assoc($sql_query)) {
 
-                $_SESSION["studentSRCode"] = $row["srcode"];
-                $_SESSION["user"] = $row["usertype"];
-            }
+                if ($row['status'] == 1) {
+                    $_SESSION['status'] = "Login Successfully";
+                    $_SESSION['status_code'] = "success";
 
-            header("location: ../view/student_view.php");
+
+                    $_SESSION["studentSRCode"] = $row["srcode"];
+                    $_SESSION["user"] = $row["usertype"];
+
+
+                    header("location: ../view/student_view.php");
+                } else if ($row['status'] == 2) {
+                    $_SESSION['status'] = "Your account has been rejected by the administrator.";
+                    $_SESSION['status_code'] = "error";
+                    header("location: ../index.php");
+                } else {
+                    $_SESSION['status'] = "Your account is currently under review by the admin. Please wait.";
+                    $_SESSION['status_code'] = "error";
+                    header("location: ../index.php");
+                }
+
+            }
         } else {
             $_SESSION['status'] = "Authentication Failed";
-            $_SESSION['status-code'] = "error";
+            $_SESSION['status_code'] = "error";
             header("location: ../index.php");
         }
     } else {
@@ -48,19 +63,31 @@ if (isset($_POST['facultyadmin'])) {
     if ($sql_query) {
         $numrows = mysqli_num_rows($sql_query);
         if ($numrows == 1) {
-            $_SESSION['status'] = "Login Successfully";
-            $_SESSION['status-code'] = "success";
             while ($row = mysqli_fetch_assoc($sql_query)) {
+                if ($row['status'] == 1) {
+                    $_SESSION['status'] = "Login Successfully";
+                    $_SESSION['status-code'] = "success";
 
-                if ($row['usertype'] === "faculty") {
-                    $_SESSION["user"] = $row["usertype"];
-                    $_SESSION["userid"] = $row["faculty_Id"];
-                    header("location: ../view/facultyModule/dashboard.php");
-                } else if ($row['usertype'] === "admin") {
-                    $_SESSION["user"] = $row["usertype"];
-                    $_SESSION["userid"] = $row["faculty_Id"];
-                    header("location: ../view/adminModule/admindashboard.php");
+
+                    if ($row['usertype'] === "faculty") {
+                        $_SESSION["user"] = $row["usertype"];
+                        $_SESSION["userid"] = $row["faculty_Id"];
+                        header("location: ../view/facultyModule/dashboard.php");
+                    } else if ($row['usertype'] === "admin") {
+                        $_SESSION["user"] = $row["usertype"];
+                        $_SESSION["userid"] = $row["faculty_Id"];
+                        header("location: ../view/adminModule/admindashboard.php");
+                    }
+                } else if ($row['status'] == 2) {
+                    $_SESSION['status'] = "Your account has been rejected by the administrator.";
+                    $_SESSION['status_code'] = "error";
+                    header("location: ../index.php");
+                } else {
+                    $_SESSION['status'] = "Your account is currently under review by the admin. Please wait.";
+                    $_SESSION['status_code'] = "error";
+                    header("location: ../index.php");
                 }
+
             }
         } else {
             $_SESSION['status'] = "Authentication Failed";

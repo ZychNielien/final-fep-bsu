@@ -8,9 +8,9 @@ if (isset($_GET['subject_id'])) {
     $query = "WITH sec_count AS (
                     SELECT 
                         COUNT(section_id) AS SLOT, 
-                        subject_id 
+                        subject_id,  section_id
                             FROM enrolled_student 
-                            GROUP BY subject_id),
+                            GROUP BY subject_id, section_id),
 
                   unit_count AS (
                     SELECT 
@@ -24,10 +24,10 @@ if (isset($_GET['subject_id'])) {
                     SELECT 
                         A.slot, 
                         COALESCE(SC.SLOT, 0) AS total_slot,
-                        U.TotalUnits
+                        COALESCE(U.TotalUnits, 0) AS TotalUnits
                     FROM assigned_subject A 
                         LEFT JOIN sec_count SC 
-                            ON A.subject_id = SC.subject_id 
+                            ON A.subject_id = SC.subject_id AND A.section_id = SC.section_id
                         LEFT JOIN unit_count U
                             ON A.subject_id = U.subject_id
                         WHERE A.id = $subID";

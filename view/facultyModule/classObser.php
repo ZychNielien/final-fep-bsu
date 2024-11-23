@@ -2,6 +2,20 @@
 include "components/navBar.php";
 
 $FacultyID = $userRow['faculty_Id'];
+
+// Query to get the selected_date from the database (assuming id = 1)
+$sql = "SELECT classdate FROM classroomdate WHERE id = 1";
+$result = $con->query($sql);
+
+// Fetch the result
+if ($result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    $startDate = $row['classdate'];
+    $selectedDate = $row['classdate'];  // Get the selected date value from the database
+} else {
+    $selectedDate = ''; // Default to empty if no data found
+}
+
 ?>
 
 <head>
@@ -172,10 +186,15 @@ $FacultyID = $userRow['faculty_Id'];
                     }
 
                     $FacultyID = $userRow['faculty_Id'];
-                    $sqlSAY = "SELECT DISTINCT  sf.semester, sf.academic_year 
-                            FROM classroomobservation sf
-                            JOIN instructor i ON sf.toFacultyID = i.faculty_Id
-                            WHERE sf.toFacultyID = '$FacultyID'";
+
+                    $sqlSAY = "
+                        SELECT DISTINCT sf.semester, sf.academic_year 
+                        FROM classroomobservation sf
+                        JOIN instructor i ON sf.toFacultyID = i.faculty_Id
+                        WHERE sf.toFacultyID = '$FacultyID'
+                          AND sf.semester IS NOT NULL AND sf.semester != ''
+                          AND sf.academic_year IS NOT NULL AND sf.academic_year != ''
+                    ";
 
                     $sqlSAY_query = mysqli_query($con, $sqlSAY);
 
@@ -189,6 +208,7 @@ $FacultyID = $userRow['faculty_Id'];
 
                     $selectedSemester = isset($_POST['semester']) ? $_POST['semester'] : '';
                     $selectedAcademicYear = isset($_POST['academic_year']) ? $_POST['academic_year'] : '';
+
 
                     ?>
 
@@ -234,33 +254,66 @@ $FacultyID = $userRow['faculty_Id'];
     </div>
 
     <div class="d-flex justify-content-evenly align-items-center">
-        <div class="form-group">
+        <div class="form-group" style="display:none;">
             <label for="date-select">Select Date:</label>
             <input type="date" class="form-control" id="date-select">
         </div>
 
         <div class="form-group">
-            <label for="start-time-select">Start Time:</label>
-            <select class="form-control" id="start-time-select">
-                <option value>Select Start Time</option>
+            <label for="date_dropdown" class="form-label">Select Date:</label>
+            <select name="date_dropdown" id="date_dropdown" class="form-select">
+                <option value="" disabled selected>Please select a date</option> <!-- Default Placeholder -->
+                <?php
+                // Convert the start date to a DateTime object
+                $startDateObj = new DateTime($startDate);
+
+                // Get today's date
+                $currentDate = new DateTime();
+
+                // Loop to create 5 options, one day apart
+                for ($i = 0; $i < 5; $i++) {
+                    // Format the date for value (Y-m-d) and for display (e.g., Nov 4, 2024)
+                    $dateValue = $startDateObj->format('Y-m-d');
+                    $dateDisplay = $startDateObj->format('F j, Y');
+
+                    // Check if the current date is in the past
+                    $isDisabled = $startDateObj < $currentDate ? 'disabled' : '';
+
+                    // Echo the option with the disabled attribute if it's a past date
+                    echo '<option value="' . $dateValue . '" ' . $isDisabled . '>' . $dateDisplay . '</option>';
+
+                    // Add 1 day to the current date for the next option
+                    $startDateObj->modify('+1 day');
+                }
+                ?>
+            </select>
+
+
+        </div>
+
+        <div class="form-group">
+            <label for="start-time-select" class="form-label">Start Time:</label>
+            <select class="form-select" id="start-time-select">
+                <option value="">Select Start Time</option>
             </select>
         </div>
 
         <div class="form-group">
-            <label for="end-time-select">End Time:</label>
-            <select class="form-control" id="end-time-select" disabled>
-                <option value>Select End Time</option>
+            <label for="end-time-select" class="form-label">End Time:</label>
+            <select class="form-select" id="end-time-select" disabled>
+                <option value="">Select End Time</option>
             </select>
         </div>
 
         <div class="form-group">
-            <label for="slot-select">Select Slot:</label>
-            <select class="form-control" id="slot-select" disabled>
-                <option value>Select Slot</option>
+            <label for="slot-select" class="form-label">Select Slot:</label>
+            <select class="form-select" id="slot-select" disabled>
+                <option value="">Select Slot</option>
                 <option value="1">Slot 1</option>
-                <option value="2">Slot 2</option>
+                <!-- <option value="2">Slot 2</option> -->
             </select>
         </div>
+
 
         <button class="btn btn-success" id="book-btn" disabled>Book</button>
 
@@ -269,9 +322,9 @@ $FacultyID = $userRow['faculty_Id'];
     <div class="my-3 d-flex justify-content-between">
         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
             data-bs-target="#evaluationResults">Classroom Observation Results</button>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+        <!-- <button type="button" class="btn btn-primary" data-bs-toggle="modal"
             data-bs-target="#preferredSchedule">Preffered
-            Schedule for Autobooking</button>
+            Schedule for Autobooking</button> -->
     </div>
 
     <table id="reservation-table" class="table table-bordered mt-2 "
@@ -336,7 +389,15 @@ $FacultyID = $userRow['faculty_Id'];
     <!-- Cancel Booking Modal -->
 
 </section>
+<?php
+// Fetching the academic year and semester from the database
+$sqlSAYSelect = "SELECT * FROM academic_year_semester WHERE id = 2";
+$result = mysqli_query($con, $sqlSAYSelect);
+$selectSAY = mysqli_fetch_assoc($result);
 
+$semester = $selectSAY['semester'];
+$academic_year = $selectSAY['academic_year'];
+?>
 
 <script>
 
@@ -457,16 +518,22 @@ $FacultyID = $userRow['faculty_Id'];
     let currentBookings = []; // Add this line to store the current bookings
 
     $(document).ready(function () {
-        const today = new Date().toISOString().split('T')[0];
-        $('#date-select').val(today);
+        var selectedClassDate = "<?php echo $selectedDate; ?>";
+        $('#date-select').val(selectedClassDate);
+
+        // Check if start-time-select should be disabled when the page loads
+        checkStartTimeAvailabilityOnLoad();
+
         loadBookings();
         createReservationTable(); // Pass currentBookings here for the first time
         updateStartTimeOptions();
 
+        // When the date is changed, update everything accordingly
         $('#date-select').change(function () {
             createReservationTable(currentBookings); // Pass the current bookings on date change
             updateStartTimeOptions();
             updateSlotOptions();
+            checkStartTimeAvailability(); // Re-check if start-time-select should be enabled/disabled
         });
 
         $('#start-time-select').change(function () {
@@ -474,17 +541,20 @@ $FacultyID = $userRow['faculty_Id'];
             checkStartTimeAvailability();
             updateSlotOptions();
         });
-        $('#date-select').on('input', function () {
-            const selectedDate = $(this).val();
-            const currentDate = new Date().toISOString().split('T')[0];
 
-            // I-disable ang start-time-select kung ang napiling petsa ay nakalipas na
-            $('#start-time-select').prop('disabled', selectedDate < currentDate);
+        $('#date_dropdown').on('input', function () {
+            const selectedDate = $(this).val(); // Get the selected date
+
+            // Disable start-time-select if no date is selected or if the selected date is empty
+            $('#start-time-select').prop('disabled', !selectedDate);
         });
 
-        // Call this function after the relevant inputs are changed
+        // Optionally, disable start-time-select on page load if no date is selected
+        const initialDate = $('#date_dropdown').val();
+        if (!initialDate) {
+            $('#start-time-select').prop('disabled', true); // Disable on page load if no date is selected
+        }
         $('#date-select, #start-time-select, #end-time-select').on('change', checkSlotAvailability);
-
 
         $('#end-time-select').change(checkSlotAvailability);
         $('#slot-select').change(checkSlotAvailability);
@@ -492,6 +562,18 @@ $FacultyID = $userRow['faculty_Id'];
         $('#form').submit(submitForm);
         $(document).on('click', '#confirm-cancel-btn', confirmCancelBooking);
     });
+
+    function checkStartTimeAvailabilityOnLoad() {
+        const selectedDate = $('#date-select').val();
+
+        // Disable start-time-select if the date is "1970-01-01" or empty
+        if (selectedDate === "1970-01-01" || selectedDate === "") {
+            $('#start-time-select').prop('disabled', true);
+        } else {
+            $('#start-time-select').prop('disabled', false);
+        }
+    }
+
 
     function loadBookings() {
         $.ajax({
@@ -527,7 +609,7 @@ $FacultyID = $userRow['faculty_Id'];
         const headerRow = $('<tr>').addClass('bg-danger text-white py-3').css('border', '2px solid white')
             .append($('<th rowspan="2" style="vertical-align: middle">DATE / TIME</th>'));
 
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 5; i++) {
             const day = new Date(selectedDate);
             day.setDate(selectedDate.getDate() + i);
             const dateHeader = `${day.toLocaleString('default', { month: 'long' })} ${day.getDate()}, ${day.getFullYear()}`;
@@ -541,9 +623,9 @@ $FacultyID = $userRow['faculty_Id'];
         }
 
         const slotHeaderRow = $('<tr>').append($('<th style="display: none;"></th>'));
-        for (let i = 0; i < 2; i++) {
-            slotHeaderRow.append($('<th>').addClass('bg-danger text-white py-3').css('border', '2px solid white').text('Slot 1'))
-                .append($('<th>').addClass('bg-danger text-white py-3').css('border', '2px solid white').text('Slot 2'));
+        for (let i = 0; i < 5; i++) {
+            slotHeaderRow.append($('<th style="display: none;">').addClass('bg-danger text-white py-3').attr('colspan', 2).css('border', '2px solid white').text('Slot 1'));
+            // .append($('<th>').addClass('bg-danger text-white py-3').css('border', '2px solid white').text('Slot 2'));
         }
 
         $('#reservation-table').empty().append(headerRow).append(slotHeaderRow);
@@ -568,23 +650,23 @@ $FacultyID = $userRow['faculty_Id'];
         for (let hour = 7; hour < 19; hour++) {
             const row = $('<tr>').addClass('bg-danger text-white').css('border', '2px solid white').append($('<td>').text(`${hour > 12 ? hour - 12 : hour}:00 to ${hour + 1 > 12 ? hour + 1 - 12 : hour + 1}:00 ${hour >= 12 ? 'PM' : 'AM'}`));
 
-            for (let i = 0; i < 2; i++) {
+            for (let i = 0; i < 5; i++) {
                 const dayOffset = new Date(selectedDate);
                 dayOffset.setDate(selectedDate.getDate() + i);
                 const slotKey1 = `${hour}-${dayOffset.getTime()}-1`;
-                const slotKey2 = `${hour}-${dayOffset.getTime()}-2`;
+                // const slotKey2 = `${hour}-${dayOffset.getTime()}-2`;
 
-                const cell1 = $('<td>').css({
+                const cell1 = $('<td>').attr('colspan', 2).css({
                     'border': '2px solid #fff',
                     'color': '#000',
                     'background': '#c1d7b5'
                 }).text('Available');
 
-                const cell2 = $('<td>').css({
-                    'border': '2px solid #fff',
-                    'color': '#000',
-                    'background': '#c1d7b5'
-                }).text('Available');
+                // const cell2 = $('<td>').css({
+                //     'border': '2px solid #fff',
+                //     'color': '#000',
+                //     'background': '#c1d7b5'
+                // }).text('Available');
 
                 if (bookedSlots[slotKey1]) {
                     const booking = bookedSlots[slotKey1];
@@ -616,35 +698,36 @@ $FacultyID = $userRow['faculty_Id'];
                     }).text('Available');
                 }
 
-                if (bookedSlots[slotKey2]) {
-                    const booking = bookedSlots[slotKey2];
-                    if (booking.evaluation_status == 1) {
-                        cell2.addClass('py-3 evaluated-slot').css({
-                            'border': '2px solid #fff',
-                            'color': '#000',
-                            'background-color': '#80deea'
-                        }).html(`${booking.name}<br> Evaluated`)
-                    } else {
-                        cell2.addClass('py-3 booked-slot').css({
-                            'border': '2px solid #fff',
-                            'color': '#000',
-                            'background': '#f2b2b2', // Color for regular booked slots
-                            'cursor': 'pointer'
-                        }).html(`${booking.name}<br>${booking.room}`);
-                        cell2.on('click', function () {
-                            // Directly call cancelBooking without confirm prompt
-                            cancelBooking(booking.id, booking.name);
-                        });
-                    }
-                } else {
-                    cell2.addClass('py-3').css({
-                        'border': '2px solid #fff',
-                        'color': '#000',
-                        'background': '#c1d7b5'
-                    }).text('Available');
-                }
+                // if (bookedSlots[slotKey2]) {
+                //     const booking = bookedSlots[slotKey2];
+                //     if (booking.evaluation_status == 1) {
+                //         cell2.addClass('py-3 evaluated-slot').css({
+                //             'border': '2px solid #fff',
+                //             'color': '#000',
+                //             'background-color': '#80deea'
+                //         }).html(`${booking.name}<br> Evaluated`)
+                //     } else {
+                //         cell2.addClass('py-3 booked-slot').css({
+                //             'border': '2px solid #fff',
+                //             'color': '#000',
+                //             'background': '#f2b2b2', // Color for regular booked slots
+                //             'cursor': 'pointer'
+                //         }).html(`${booking.name}<br>${booking.room}`);
+                //         cell2.on('click', function () {
+                //             // Directly call cancelBooking without confirm prompt
+                //             cancelBooking(booking.id, booking.name);
+                //         });
+                //     }
+                // } else {
+                //     cell2.addClass('py-3').css({
+                //         'border': '2px solid #fff',
+                //         'color': '#000',
+                //         'background': '#c1d7b5'
+                //     }).text('Available');
+                // }
 
-                row.append(cell1).append(cell2);
+                row.append(cell1);
+                // .append(cell2)
             }
             $('#reservation-table').append(row);
         }
@@ -720,15 +803,6 @@ $FacultyID = $userRow['faculty_Id'];
         } else {
             $('#slot-select').prop('disabled', false);
             $('#book-btn').prop('disabled', false);
-
-            $('#slot-select option').each(function () {
-                const slotValue = $(this).val();
-                if ((slotValue === '1' && isSlot1Booked) || (slotValue === '2' && isSlot2Booked)) {
-                    $(this).prop('disabled', true);
-                } else {
-                    $(this).prop('disabled', false);
-                }
-            });
         }
     }
 
@@ -741,15 +815,18 @@ $FacultyID = $userRow['faculty_Id'];
 
     function submitForm(event) {
         event.preventDefault();
+
         const course = $('#course').val();
         const name = $('#name').val();
         const room = $('#room').val();
         const fromFacultyID = $('#fromFacultyID').val();
-        const selectedDate = new Date($('#date-select').val());
+        const selectedDate = new Date($('#date_dropdown').val());
         const startTime = parseInt($('#start-time-select').val());
         const endTime = parseInt($('#end-time-select').val());
         const selectedSlot = $('#slot-select').val();
         const evaluationStatus = $('#evaluationStatus').val();
+        const academicYear = "<?php echo $academic_year; ?>";  // PHP to JS injection
+        const semester = "<?php echo $semester; ?>";    // Make sure this ID matches your form's field
 
         if (isNaN(endTime) || endTime <= startTime) {
             Swal.fire("Error!", "Please select a valid end time.", "error");
@@ -760,7 +837,6 @@ $FacultyID = $userRow['faculty_Id'];
 
         for (let hour = startTime; hour < endTime; hour++) {
             const slotKey = `${hour}-${selectedDate.getTime()}-${selectedSlot}`;
-
             if (bookedSlots[slotKey]) {
                 allAvailable = false;
                 break;
@@ -772,77 +848,96 @@ $FacultyID = $userRow['faculty_Id'];
             return;
         }
 
-        // Prepare booking data for AJAX request
-        const bookingData = {
-            course: course,
-            name: name,
-            room: room,
-            fromFacultyID: fromFacultyID,
-            selected_date: selectedDate.toISOString().split('T')[0],
-            start_time: startTime,
-            end_time: endTime,
-            selected_slot: selectedSlot,
-            evaluation_status: evaluationStatus
-        };
+        console.log({
+            facultyId: fromFacultyID,
+            academicYear: academicYear,
+            semester: semester
+        });
 
-        console.log("Booking Data:", bookingData); // Log the data being sent
-
+        // Check if the faculty member already has a booking for the selected academic year and semester
         $.ajax({
-            type: "POST",
-            url: "saveClassroom.php",
-            data: bookingData,
-            dataType: "json",
-            contentType: "application/x-www-form-urlencoded", // Ensure the content type is set
+            url: 'check_faculty_booking.php',
+            method: 'POST',
+            dataType: 'json',
+            data: {
+                facultyId: fromFacultyID,
+                academicYear: academicYear,
+                semester: semester
+
+            },
             success: function (response) {
-                // Use the response object directly (no need for JSON.parse)
-                const updatedBooking = response;
+                if (response.exists) {
+                    Swal.fire("Error!", "You have an active booking for the current academic year and semester.", "error");
+                } else {
+                    // Proceed with the booking submission if no existing booking is found
+                    const bookingData = {
+                        course: course,
+                        name: name,
+                        room: room,
+                        fromFacultyID: fromFacultyID,
+                        selected_date: selectedDate.toISOString().split('T')[0],
+                        start_time: startTime,
+                        end_time: endTime,
+                        selected_slot: selectedSlot,
+                        evaluation_status: evaluationStatus,
+                        academic_year: academicYear,
+                        semester: semester
+                    };
 
-                // Assuming `bookedSlots` is the global object to hold all booked slots
-                const slotKey = `${updatedBooking.startTime}-${updatedBooking.selectedDate}-${updatedBooking.slot}`;
-                bookedSlots[slotKey] = {
-                    name: updatedBooking.name,
-                    room: updatedBooking.room,
-                    // Any other fields you want to store
-                };
+                    console.log("Booking Data:", bookingData);
 
-                // Refresh the table to show the new booking
-                createReservationTable(); // Refresh the table
-                $('#reservationModal').modal('hide'); // Hide the modal
+                    $.ajax({
+                        type: "POST",
+                        url: "saveClassroom.php",
+                        data: bookingData,
+                        dataType: "json",
+                        contentType: "application/x-www-form-urlencoded",
+                        success: function (response) {
+                            const updatedBooking = response;
+                            const slotKey = `${updatedBooking.startTime}-${updatedBooking.selectedDate}-${updatedBooking.slot}`;
+                            bookedSlots[slotKey] = {
+                                name: updatedBooking.name,
+                                room: updatedBooking.room,
+                            };
 
-                // Show success message
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Booking Successful!',
-                    text: 'Your booking has been saved successfully.',
-                    timer: 2000,
-                    timerProgressBar: true,
-                    willClose: () => {
-                        location.reload(); // Reload the page to ensure all changes are reflected
-                    }
-                });
+                            createReservationTable();
+                            $('#reservationModal').modal('hide');
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Booking Successful!',
+                                text: 'Your booking has been saved successfully.',
+                                timer: 2000,
+                                timerProgressBar: true,
+                                willClose: () => {
+                                    location.reload();
+                                }
+                            });
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("AJAX Error:", {
+                                status: status,
+                                error: error,
+                                responseText: xhr.responseText,
+                                statusCode: xhr.status
+                            });
+
+                            Swal.fire({
+                                icon: "error",
+                                title: "Error!",
+                                text: `An error occurred while saving the booking. Status: ${status} (${xhr.status})`,
+                                footer: `<pre>${xhr.responseText}</pre>`
+                            });
+                        }
+                    });
+                }
+            },
+            error: function () {
+                Swal.fire("Error!", "An error occurred while checking for existing bookings.", "error");
             }
-
-            ,
-
-            error: function (xhr, status, error) {
-                console.error("AJAX Error:", {
-                    status: status,
-                    error: error,
-                    responseText: xhr.responseText, // Log the server's response text
-                    statusCode: xhr.status // Log the HTTP status code
-                });
-
-                // Show an alert with more information
-                Swal.fire({
-                    icon: "error",
-                    title: "Error!",
-                    text: `An error occurred while saving the booking. Status: ${status} (${xhr.status})`,
-                    footer: `<pre>${xhr.responseText}</pre>` // Optionally show the response text for debugging
-                });
-            }
-
         });
     }
+
     var facultyId = "<?php echo $userRow['faculty_Id']; ?>";
 
     function cancelBooking(bookingId) {

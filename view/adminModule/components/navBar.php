@@ -19,7 +19,7 @@ if (!isset($_SESSION["userid"]) || $_SESSION["user"] !== "admin") {
     }
 }
 if (!isset($_SESSION["userid"])) {
-    header("location: ../loginModule/index.php");
+    header("location: ../../index.php");
     exit();
 }
 
@@ -172,7 +172,7 @@ $userRow = mysqli_fetch_assoc($usersql_query);
                     </ul>
                 </li>
                 <li>
-                    <a href="faculty.php" class="
+                    <a href="overall.php" class="
                     <?php
                     if ($page == "faculty.php") {
                         echo "linkName active";
@@ -183,13 +183,13 @@ $userRow = mysqli_fetch_assoc($usersql_query);
                     ">
 
                         <i class="material-icons">group</i>
-                        <span>Faculty Member</span>
+                        <span>Overall Ranking</span>
 
                     </a>
                     <ul class="subMenu blank">
                         <li>
                             <a href="faculty.php" class="linkName">
-                                Faculty Member
+                                Overall Ranking
                             </a>
                         </li>
                     </ul>

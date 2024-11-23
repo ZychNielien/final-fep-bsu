@@ -64,9 +64,8 @@ li {
   transition: 0.8s ease-in-out;
 }
 
-form {
-  max-width: 260px;
-  width: 100%;
+.formAll {
+  width: 90%;
   margin: 0 auto;
   height: 100%;
   display: flex;
@@ -370,7 +369,9 @@ main.sign-up-mode .carousel {
     padding: 1.5rem 2.5rem 2rem;
     transition: transform 0.8s ease-in-out, opacity 0.45s linear;
   }
-
+  .formAll {
+    max-width: 400px;
+  }
   .heading {
     margin: 2rem 0;
   }
@@ -392,7 +393,7 @@ main.sign-up-mode .carousel {
     height: auto;
     width: 100%;
     padding: 3rem 2rem;
-    display: flex;
+    display: none;
   }
 
   .images-wrapper {

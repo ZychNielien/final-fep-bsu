@@ -17,17 +17,17 @@ if (isset($_POST['submit_sub'])) {
 
     if ($query_run) {
         $_SESSION['status'] = "New Subject has been added Successfully";
-        $_SESSION['status-code'] = "success";
+        $_SESSION['status_code'] = "success";
         header("location: ../view/adminModule/maintenance.php");
     } else {
         $_SESSION['status'] = "Something is wrong";
-        $_SESSION['status-code'] = "error";
+        $_SESSION['status_code'] = "error";
         header("location: ../view/adminModule/maintenance.php");
     }
 }
 
 //EDIT SUBJECT
-if(isset($_POST['updatesub'])){
+if (isset($_POST['updatesub'])) {
 
     $subID = $_POST['subID'];
     $sub = $_POST['subject2'];
@@ -42,11 +42,11 @@ if(isset($_POST['updatesub'])){
 
     if ($query_run) {
         $_SESSION['status'] = "Updated Successfully";
-        $_SESSION['status-code'] = "success";
+        $_SESSION['status_code'] = "success";
         header("location: ../view/adminModule/maintenance.php");
     } else {
         $_SESSION['status'] = "Something is wrong";
-        $_SESSION['status-code'] = "error";
+        $_SESSION['status_code'] = "error";
         header("location: ../view/adminModule/maintenance.php");
     }
 
@@ -64,17 +64,17 @@ if (isset($_POST['submit_section'])) {
 
     if ($query_run) {
         $_SESSION['status'] = "New Section has been added Successfully";
-        $_SESSION['status-code'] = "success";
+        $_SESSION['status_code'] = "success";
         header("location: ../view/adminModule/maintenance.php");
     } else {
         $_SESSION['status'] = "Something is wrong";
-        $_SESSION['status-code'] = "error";
+        $_SESSION['status_code'] = "error";
         header("location: ../view/adminModule/maintenance.php");
     }
 }
 
 //EDIT SECTION
-if(isset($_POST['updateSection'])){
+if (isset($_POST['updateSection'])) {
 
     $id = $_POST['secID'];
     $sec = $_POST['addsection2'];
@@ -86,11 +86,11 @@ if(isset($_POST['updateSection'])){
 
     if ($query_run) {
         $_SESSION['status'] = "Updated Successfully";
-        $_SESSION['status-code'] = "success";
+        $_SESSION['status_code'] = "success";
         header("location: ../view/adminModule/maintenance.php");
     } else {
         $_SESSION['status'] = "Something is wrong";
-        $_SESSION['status-code'] = "error";
+        $_SESSION['status_code'] = "error";
         header("location: ../view/adminModule/maintenance.php");
     }
 
@@ -116,17 +116,17 @@ if (isset($_POST['submit_assigned'])) {
 
     if ($query_run) {
         $_SESSION['status'] = "Save Successfully";
-        $_SESSION['status-code'] = "success";
+        $_SESSION['status_code'] = "success";
         header("location:../view/adminModule/maintenance.php");
     } else {
         $_SESSION['status'] = "Something is wrong";
-        $_SESSION['status-code'] = "error";
+        $_SESSION['status_code'] = "error";
         header("location:../view/adminModule/maintenance.php");
     }
 }
 
 //major input
-if(isset($_POST['submitMajor'])){
+if (isset($_POST['submitMajor'])) {
 
     $srcode = $_POST['srcode'];
     $major = $_POST['major'];
@@ -135,20 +135,20 @@ if(isset($_POST['submitMajor'])){
     $query_run = mysqli_query($con, $query);
 
     if ($query_run) {
-        $_SESSION['status'] = $major. " has been selected, please Login Again";
-        $_SESSION['status-code'] = "success";
-        header('location: ../index.php');
+        $_SESSION['status'] = $major . " has been selected, please Login Again";
+        $_SESSION['status_code'] = "success";
+        header('location: ../controller/logoutMajor.php');
         session_destroy();
     } else {
         $_SESSION['status'] = "Something is wrong";
-        $_SESSION['status-code'] = "error";
+        $_SESSION['status_code'] = "error";
         header("location:../view/student_view.php");
     }
 
 }
 
-//ADD STUDENT
-if(isset($_POST['submit_student'])){
+// ADD STUDENT
+if (isset($_POST['submit_student'])) {
     $srcode = $_POST['srcode'];
     $lastname = $_POST['lastname'];
     $firstname = $_POST['firstname'];
@@ -159,27 +159,58 @@ if(isset($_POST['submit_student'])){
 
     $lastN = strtoupper($lastname);
 
-    $query = "INSERT INTO student_basic_info (sr_code, lastname, firstname, middlename) VALUES ('$srcode','$lastname','$firstname','$middlename')";
-    $query_run = mysqli_query($con, $query);
+    // Check if the sr_code already exists in student_basic_info
+    $check_query = "SELECT sr_code FROM student_basic_info WHERE sr_code = '$srcode'";
+    $check_result = mysqli_query($con, $check_query);
 
-    if($query_run){
-        $query2 = "INSERT INTO student_status (sr_code, year_level, status_id, section, course, sem_id) VALUES ('$srcode', '$year', '1', '0', '$course', '$sem')";
-        $query_run2 = mysqli_query($con, $query2);
-        if($query_run2){
-            $query3 = "INSERT INTO studentlogin (srcode, password, usertype) VALUES ('$srcode', '$lastN', 'student')";
-            $query_run3 = mysqli_query($con, $query3);
-            if($query_run3){
-                $_SESSION['status'] = "Student added successfully!";
-                $_SESSION['status_code'] = "success";
-                header("Location: ../view/adminModule/maintenance.php");
+    if (mysqli_num_rows($check_result) > 0) {
+        // sr_code already exists
+        $_SESSION['status'] = "Error: Student with this SR Code already exists!";
+        $_SESSION['status_code'] = "error"; // Error notification
+        header("Location: ../index.php");
+        exit();
+    } else {
+        // Insert into student_basic_info
+        $query = "INSERT INTO student_basic_info (sr_code, lastname, firstname, middlename) VALUES ('$srcode','$lastname','$firstname','$middlename')";
+        $query_run = mysqli_query($con, $query);
+
+        if ($query_run) {
+            // Insert into student_status
+            $query2 = "INSERT INTO student_status (sr_code, year_level, status_id, section, course, sem_id) VALUES ('$srcode', '$year', '1', '0', '$course', '$sem')";
+            $query_run2 = mysqli_query($con, $query2);
+            if ($query_run2) {
+                // Insert into studentlogin
+                $query3 = "INSERT INTO studentlogin (srcode, password, usertype) VALUES ('$srcode', '$lastN', 'student')";
+                $query_run3 = mysqli_query($con, $query3);
+                if ($query_run3) {
+                    $_SESSION['status'] = "Registration successful. Please wait for admin approval before logging in. Your default password is the uppercase of your last name.";
+                    $_SESSION['status_code'] = "success"; // Success notification
+                    header("Location: ../index.php");
+                    exit();
+                } else {
+                    $_SESSION['status'] = "Error: Failed to add student login!";
+                    $_SESSION['status_code'] = "error"; // Error notification
+                    header("Location: ../index.php");
+                    exit();
+                }
+            } else {
+                $_SESSION['status'] = "Error: Failed to add student status!";
+                $_SESSION['status_code'] = "error"; // Error notification
+                header("Location: ../index.php");
                 exit();
             }
+        } else {
+            $_SESSION['status'] = "Error: Failed to add student basic info!";
+            $_SESSION['status_code'] = "error"; // Error notification
+            header("Location: ../index.php");
+            exit();
         }
     }
 }
 
+
 //ADD PREREQUISITE SUBJECT
-if(isset($_POST['submit_prereq'])){
+if (isset($_POST['submit_prereq'])) {
 
     $sub = $_POST['prereq_sub'];
     $prereq = $_POST['prerequisite'];
@@ -190,17 +221,17 @@ if(isset($_POST['submit_prereq'])){
 
     if ($query_run) {
         $_SESSION['status'] = "Save Successfully";
-        $_SESSION['status-code'] = "success";
+        $_SESSION['status_code'] = "success";
         header("location:../view/adminModule/maintenance.php");
     } else {
         $_SESSION['status'] = "Something is wrong";
-        $_SESSION['status-code'] = "error";
+        $_SESSION['status_code'] = "error";
         header("location:../view/adminModule/maintenance.php");
     }
 }
 
 //EDIT PREREQUISITE SUBJECT
-if(isset($_POST['update_prereq'])) {
+if (isset($_POST['update_prereq'])) {
 
     $id = $_POST['prereqID'];
     $sub = $_POST['prereq_sub2'];
@@ -212,11 +243,11 @@ if(isset($_POST['update_prereq'])) {
 
     if ($query_run) {
         $_SESSION['status'] = "Updated Successfully";
-        $_SESSION['status-code'] = "success";
+        $_SESSION['status_code'] = "success";
         header("location: ../view/adminModule/maintenance.php");
     } else {
         $_SESSION['status'] = "Something is wrong";
-        $_SESSION['status-code'] = "error";
+        $_SESSION['status_code'] = "error";
         header("location: ../view/adminModule/maintenance.php");
     }
 

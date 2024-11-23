@@ -10,9 +10,9 @@ if (isset($_GET['year_level'])) {
     $query = "WITH sec_count AS (
                         SELECT 
                             COUNT(section_id) AS SLOT, 
-                            subject_id 
+                            subject_id, section_id
                         FROM enrolled_student 
-                        GROUP BY subject_id
+                        GROUP BY subject_id, section_id
                     ) 
                     SELECT 
                         A.id, 
@@ -40,7 +40,7 @@ if (isset($_GET['year_level'])) {
                     INNER JOIN year_level YL 
                         ON S.year = YL.year_id 
                     LEFT JOIN sec_count SCO 
-                        ON A.subject_id = SCO.subject_id 
+                        ON A.subject_id = SCO.subject_id AND A.section_id = SCO.section_id
                     INNER JOIN days D 
                         ON A.day_id = D.day_id 
                     INNER JOIN time TS 

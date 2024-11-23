@@ -63,6 +63,7 @@ if (isset($_SESSION['studentSRCode'])) {
               </div>
 
               <input type="submit" name="studentLogin" id="studentLogin" value="Sign In" class="sign-btn" />
+              <span>Don't have an account? <a href="">Request Now</a></span>
 
             </div>
           </form>
@@ -147,8 +148,7 @@ if (isset($_SESSION['studentSRCode'])) {
     })
   </script>
   <script src="../../public/js/main.js"></script>
-  <script src="../../public/js/sweetalert.min.js"></script>
-
+  <script src="../../public/js/sweetalert2@11.js"></script>
   <?php
   if (isset($_SESSION['status']) && $_SESSION['status'] != '') {
     ?>

@@ -16,15 +16,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $evaluation_status = $_POST['evaluation_status'] ?? '';
     $facultyID = $_SESSION["userid"] ?? '';
 
+    $sqlSAYSelect = "SELECT * FROM academic_year_semester WHERE id =2";
+    $result = mysqli_query($con, $sqlSAYSelect);
+    $selectSAY = mysqli_fetch_assoc($result);
+
+    $semester = $selectSAY['semester'];
+    $academic_year = $selectSAY['academic_year'];
+
     // Validate inputs (additional validation may be necessary)
     if (empty($course) || empty($name) || empty($room)) {
         echo json_encode(['success' => false, 'message' => 'Required fields are missing.']);
         exit;
     }
-
     // Prepare and execute the SQL statement
-    $stmt = $con->prepare("INSERT INTO bookings (course, name, room, selected_date, start_time, end_time, slot, evaluation_status,faculty_Id) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
-    $stmt->bind_param("ssssisisi", $course, $name, $room, $selected_date, $start_time, $end_time, $selected_slot, $evaluation_status, $facultyID);
+    $stmt = $con->prepare("INSERT INTO bookings (course, name, room, selected_date, start_time, end_time, slot, evaluation_status, faculty_Id, semester, academic_year) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssiiisiss", $course, $name, $room, $selected_date, $start_time, $end_time, $selected_slot, $evaluation_status, $facultyID, $semester, $academic_year);
 
     if ($stmt->execute()) {
         $course = $_POST['course'];
@@ -41,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $formattedEndTime = date('g:i A', strtotime("$endTime:00"));
 
         $url = "https://script.google.com/macros/s/AKfycbyxelEgiJLf-a-EuL6qdg5QZOaZC6L-EzYNQ4akLi2lImaPvVtavLbgNotMVijqv-g9wA/exec";
-        $recipient = 'corokarl6@gmail.com';
+        $recipient = 'cicsmalvarevaluation@gmail.com';
         $subject = 'New Classroom Observation Booking';
         $body = "
         Dear Admin,

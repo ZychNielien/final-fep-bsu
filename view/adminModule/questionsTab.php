@@ -10,8 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $semester = $_POST['semester'] ?? null;
         $academicYear = $_POST['academicYear'] ?? null;
 
-
-        $sql = "SELECT faculty_Id FROM instructor";
+        // Step 1: Get all the faculty IDs
+        $sql = "SELECT faculty_Id FROM instructor WHERE status = 1";
         $result = $con->query($sql);
 
         if ($result->num_rows > 0) {
@@ -20,45 +20,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $userIds[] = $row['faculty_Id'];
             }
 
-            foreach ($userIds as $userId) {
+            $totalUsers = count($userIds);
 
+            // Step 2: Calculate the number of random assignments per faculty ID
+            // This can be dynamic, let's assume we want to assign a total of 'X' random faculty IDs to each faculty member
+            $totalRandomIds = $totalUsers * 5; // Example: Assigning 5 random IDs per faculty member
+            $randomAssignmentsCount = floor($totalRandomIds / $totalUsers);
+
+            // Step 3: Initialize random assignment counters
+            $randomCount = array_fill_keys($userIds, 0);
+
+            // Step 4: Shuffle all faculty IDs randomly to ensure an even distribution
+            shuffle($userIds);
+            $assignments = [];
+
+            // Step 5: Assign random faculty IDs to each faculty member
+            foreach ($userIds as $userId) {
+                // Filter out the current userId from being assigned to itself
                 $filteredIds = array_filter($userIds, function ($id) use ($userId) {
-                    return $id != $userId;
+                    return $id != $userId; // Exclude the current userId
                 });
 
-                if (count($filteredIds) >= 3) {
+                // Step 6: Shuffle filtered IDs to ensure randomness
+                shuffle($filteredIds);
 
-                    $randomIds = array_rand(array_flip($filteredIds), 5);
-                    foreach ($randomIds as $randomId) {
-                        $insertStmt = $con->prepare("INSERT INTO randomfaculty (faculty_Id, random_Id, semester, academic_year) VALUES (?, ?, ?, ?)");
-                        if ($insertStmt === false) {
-                            echo json_encode(["status" => "error", "message" => "Error in prepare: " . $con->error]);
-                            exit;
-                        }
-                        $insertStmt->bind_param("iiss", $userId, $randomId, $semester, $academicYear);
-                        if (!$insertStmt->execute()) {
-                            echo json_encode(["status" => "error", "message" => "Execute failed: " . $insertStmt->error]);
-                            exit;
-                        }
+                // Select the random IDs to assign to the current user
+                $assignedRandomIds = [];
+                foreach ($filteredIds as $randomId) {
+                    if ($randomCount[$randomId] < $randomAssignmentsCount) {
+                        $assignedRandomIds[] = $randomId;
+                        $randomCount[$randomId]++; // Track the assignment of this random ID
+                    }
+
+                    // Stop assigning once the current faculty has enough random IDs
+                    if (count($assignedRandomIds) == 5) {
+                        break;
                     }
                 }
+
+                // Step 7: Insert the random assignments into the database
+                foreach ($assignedRandomIds as $randomId) {
+                    $insertStmt = $con->prepare("INSERT INTO randomfaculty (faculty_Id, random_Id, semester, academic_year) VALUES (?, ?, ?, ?)");
+                    if ($insertStmt === false) {
+                        echo json_encode(["status" => "error", "message" => "Error in prepare: " . $con->error]);
+                        exit;
+                    }
+                    $insertStmt->bind_param("iiss", $userId, $randomId, $semester, $academicYear);
+                    if (!$insertStmt->execute()) {
+                        echo json_encode(["status" => "error", "message" => "Execute failed: " . $insertStmt->error]);
+                        exit;
+                    }
+                }
+
+                // Track the random assignments
+                $assignments[$userId] = $assignedRandomIds;
             }
-            $_SESSION['toggle_state'] = 'assign';
-            echo json_encode(["status" => "success", "message" => "Tatlong random IDs na-assign sa bawat user!"]);
+
+            // Step 8: Verify that the distribution of random assignments is as balanced as possible
+            $minAssignments = min($randomCount);
+            $maxAssignments = max($randomCount);
+
+            if ($maxAssignments - $minAssignments > 1) {
+                echo json_encode(["status" => "error", "message" => "Random faculty IDs have not been equally distributed."]);
+                exit;
+            }
+
+            echo json_encode(["status" => "success", "message" => "Random IDs have been assigned equally to all faculty members."]);
         } else {
-            echo json_encode(["status" => "error", "message" => "Walang users na natagpuan."]);
+            echo json_encode(["status" => "error", "message" => "No users found."]);
         }
     } elseif ($_POST['action'] === 'clear') {
         $clearSql = "DELETE FROM randomfaculty";
         if ($con->query($clearSql) === TRUE) {
-
-            echo json_encode(["status" => "success", "message" => "Nabura ang lahat ng random IDs at ang mga napiling Academic Year at Semester."]);
+            echo json_encode(["status" => "success", "message" => "All random faculty IDs and the selected Academic Year and Semester have been cleared."]);
         } else {
             echo json_encode(["status" => "error", "message" => "Error: " . $con->error]);
         }
     }
     exit;
 }
+
+
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentaction'])) {
@@ -98,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentaction'])) {
             if ($con->query($clearSql) === TRUE) {
                 $clearSql_std = "DELETE FROM enrolled_student";
                 if ($con->query($clearSql_std) === TRUE) {
-                echo json_encode(["status" => "success", "message" => "Evaluation closed."]);
+                    echo json_encode(["status" => "success", "message" => "Evaluation closed."]);
                 }
             } else {
                 echo json_encode(["status" => "error", "message" => "Error: " . $con->error]);

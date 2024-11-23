@@ -129,6 +129,31 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
             </div>
         </div>
 
+        <?php
+        $countWhoSQL = "SELECT COUNT(*) AS count FROM randomfaculty WHERE random_Id = '$userId'";
+        $countWhoSQL_query = mysqli_query($con, $countWhoSQL);
+
+
+        $distinctSemester = $subject['semester'];
+        $distinctAcademicYear = $subject['academic_year'];
+
+        if (mysqli_num_rows($countWhoSQL_query) > 0) {
+            while ($countWhoSQLRow = mysqli_fetch_assoc($countWhoSQL_query)) {
+
+                $countWhoForm = "SELECT COUNT(*) AS count FROM peertopeerform WHERE toFacultyID = '$userId' AND semester = '$distinctSemester' AND academic_year = '$distinctAcademicYear'";
+                $countWhoForm_query = mysqli_query($con, $countWhoForm);
+                $countWhoFormRow = mysqli_fetch_assoc($countWhoForm_query);
+
+                ?>
+                <div class="d-flex justify-content-center align-items-center">
+                    <h5>Number of faculty who evaluated you: <span class="fw-bold"><?php echo $countWhoFormRow['count'] ?></span>
+                    </h5>
+                </div>
+                <?php
+            }
+        }
+        ?>
+
         <table class="table table-striped table-bordered text-center align-middle mb-5">
             <thead>
                 <tr style="background: #d0112b; color: #fff;">

@@ -38,7 +38,7 @@ include "../../model/dbconnection.php";
                     return preg_replace('/[^a-zA-Z0-9_]/', '', trim($name));
                 }
 
-                $sqlSAY = "SELECT DISTINCT semester, academic_year FROM studentsform";
+                $sqlSAY = "SELECT DISTINCT semester, academic_year FROM studentsform WHERE semester != '' AND semester IS NOT NULL";
                 $sqlSAY_query = mysqli_query($con, $sqlSAY);
 
                 $semesters = [];
@@ -102,10 +102,10 @@ include "../../model/dbconnection.php";
                 $sql = "SELECT * FROM studentscategories";
                 $sql_query = mysqli_query($con, $sql);
 
-                $semesters_query = "SELECT DISTINCT semester FROM studentsform";
+                $semesters_query = "SELECT DISTINCT semester FROM studentsform WHERE semester != '' AND semester IS NOT NULL";
                 $semesters_result = mysqli_query($con, $semesters_query);
 
-                $academic_years_query = "SELECT DISTINCT academic_year FROM studentsform";
+                $academic_years_query = "SELECT DISTINCT academic_year FROM studentsform WHERE semester != '' AND semester IS NOT NULL";
                 $academic_years_result = mysqli_query($con, $academic_years_query);
 
                 if (mysqli_num_rows($sql_query)) {

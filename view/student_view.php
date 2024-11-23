@@ -4,9 +4,13 @@ session_start();
 include "../model/dbconnection.php";
 
 if (!isset($_SESSION['studentSRCode'])) {
-  header('Location: ../view/loginModule/index.php');
+  header('Location: ../index.php');
   exit();
 }
+
+$studentSC = $_SESSION['studentSRCode'];
+
+
 ?>
 
 <!DOCTYPE html>
@@ -86,7 +90,7 @@ if (!isset($_SESSION['studentSRCode'])) {
         <img src="../public/picture/bsu.png" alt style="width: 70px; height: 70px" />
       </div>
       <div>
-        <h4 style="color: white">FACULTY EVALUATION PORTAL</h4>
+        <h4 style="color: white">FACULTY EVALUATION</h4>
       </div>
       <div>
         <img src="../public/picture/cics.png" alt style="width: 65px; height: 65px" />
@@ -263,14 +267,13 @@ if (!isset($_SESSION['studentSRCode'])) {
                 <th>Unit</th>
                 <th>Section</th>
                 <th>Instructor</th>
-                <th>Schedule</th>
                 <th>Action</th>
               </thead>
               <tbody>
                 <?php
                 $srcode = $_SESSION['studentSRCode'];
 
-                $query = "SELECT 
+                $query = "SELECT DISTINCT
                               E.id,
                               S.subject_code, 
                               E.subject_id, 
@@ -278,13 +281,7 @@ if (!isset($_SESSION['studentSRCode'])) {
                               E.section_id, 
                               I.last_name, 
                               I.first_name, 
-                              I.faculty_id, 
-                              D.days, 
-                              TS.time AS startTime, 
-                              TE.time AS endTime, 
-                              COALESCE(D2.days, 'N/A') AS Day2, 
-                              COALESCE(TS2.time, 'N/A') AS startTime2, 
-                              COALESCE(TE2.time, 'N/A') AS endTime2,
+                              I.faculty_id,
                               E.eval_status
                           FROM 
                               enrolled_subject E 
@@ -296,18 +293,6 @@ if (!isset($_SESSION['studentSRCode'])) {
                               enrolled_student ES ON S.subject_id = ES.subject_id 
                           LEFT JOIN 
                               assigned_subject A ON ES.subject_id = A.subject_id AND E.faculty_id = A.faculty_id AND ES.section_id = A.section_id
-                          INNER JOIN 
-                              days D ON A.day_id = D.day_id 
-                          INNER JOIN 
-                              time TS ON A.S_time_id = TS.time_id 
-                          INNER JOIN 
-                              time TE ON A.E_time_id = TE.time_id 
-                          LEFT JOIN 
-                              days D2 ON A.day_id_2 = D2.day_id 
-                          LEFT JOIN 
-                              time TS2 ON A.S_time_id_2 = TS2.time_id 
-                          LEFT JOIN 
-                              time TE2 ON A.E_time_id_2 = TE2.time_id 
                           WHERE 
                               E.sr_code = '$srcode'";
 
@@ -328,16 +313,7 @@ if (!isset($_SESSION['studentSRCode'])) {
                       <td><?php echo $row['unit'] ?></td>
                       <td><?php echo $row['section_id'] ?></td>
                       <td><?php echo $row['last_name'] ?>, <?php echo $row['first_name'] ?></td>
-                      <?php if ($row['Day2'] == 'N/A') { ?>
-                        <td><?php echo $row['days'] ?> - <?php echo $row['startTime'] ?> - <?php echo $row['endTime'] ?></td>
-                        <?php
-                      } else {
-                        ?>
-                        <td><?php echo $row['days'] ?> - <?php echo $row['startTime'] ?> - <?php echo $row['endTime'] ?> /
-                          <?php echo $row['Day2'] ?> - <?php echo $row['startTime2'] ?> - <?php echo $row['endTime2'] ?>
-                        </td>
-                        <?php
-                      } ?>
+
 
                       <?php
 
@@ -575,6 +551,24 @@ if (!isset($_SESSION['studentSRCode'])) {
 
                 <!-- HIDDEN INPUTS -->
                 <div style="display: none;">
+
+                  <?php
+                  $query = "SELECT * FROM student_status WHERE sr_code = ?";
+                  $stmt = mysqli_prepare($con, $query);
+                  mysqli_stmt_bind_param($stmt, "i", $studentSC);
+                  mysqli_stmt_execute($stmt);
+                  $result = mysqli_stmt_get_result($stmt);
+
+                  if ($result && mysqli_num_rows($result) > 0) {
+                    $studentStatusRow = mysqli_fetch_assoc($result);
+                    $section = $studentStatusRow['section']; // Store the section in a variable
+                  } else {
+                    $section = "No data found"; // Handle no result found case
+                  }
+
+                  mysqli_stmt_close($stmt);
+                  ?>
+                  <input type="text" name="studentSection" value=" <?php echo $section; ?>">
                   <input type="text" name="fromStudents" value="">
                   <input type="text" id="facultyID" name="toFacultyID">
                   <input type="date" id="dateInput" name="date" required>

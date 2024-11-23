@@ -129,29 +129,249 @@ while ($row = mysqli_fetch_assoc($result)) {
     $subject = $row['subject'];
     $semesterYear = $row['semester'] . ' ' . $row['academic_year'];
 
+    // Skip rows where 'combined_average' is null or empty
+    if (empty($row['combined_average'])) {
+        continue;
+    }
+
+    // Add semesterYear to semesters array if not already present
     if (!in_array($semesterYear, $semesters)) {
         $semesters[] = $semesterYear;
     }
 
+    // Initialize subjectData for the current subject if not already set
     if (!isset($subjectData[$subject])) {
         $subjectData[$subject] = array_fill(0, count($semesters), null);
     }
 
+    // Ensure subjectData arrays align with the length of the semesters array
     foreach ($subjectData as $subj => $data) {
         if (count($data) < count($semesters)) {
             $subjectData[$subj] = array_pad($subjectData[$subj], count($semesters), null);
         }
     }
 
+    // Find the index of the current semesterYear and assign the combined_average
     $index = array_search($semesterYear, $semesters);
     if ($index !== false) {
         $subjectData[$subject][$index] = (float) $row['combined_average'];
     }
 }
 
+
 $subjectsJson = json_encode(array_keys($subjectData));
 $subjectDataJson = json_encode($subjectData);
 $semestersJson = json_encode($semesters);
+
+?>
+<?php
+
+include "../../model/dbconnection.php";
+
+$usersqlStudentsForm = "SELECT * FROM `instructor`";
+$usersql_queryStudentsForm = mysqli_query($con, $usersqlStudentsForm);
+if (!$usersql_queryStudentsForm) {
+    echo "Query failed: " . mysqli_error($con);
+    exit;
+}
+
+function sanitizeColumnName($name)
+{
+    return preg_replace('/[^a-zA-Z0-9_]/', '', trim($name));
+}
+
+function getVerbalInterpretation($averageRatingStudentsForm): string
+{
+    if ($averageRatingStudentsForm < 0 || $averageRatingStudentsForm > 5) {
+        return 'No description';
+    }
+
+    $interpretations = ['None', 'Poor', 'Fair', 'Satisfactory', 'Very Satisfactory', 'Outstanding'];
+    return $interpretations[(int) $averageRatingStudentsForm];
+}
+
+$sqlCategoriesStudentsForm = "SELECT * FROM `studentscategories`";
+$sqlCategories_queryStudentsForm = mysqli_query($con, $sqlCategoriesStudentsForm);
+if (!$sqlCategories_queryStudentsForm) {
+    echo "Query failed: " . mysqli_error($con);
+    exit;
+}
+
+$categoryAveragesStudentsForm = [];
+
+if (mysqli_num_rows($usersql_queryStudentsForm) > 0) {
+    while ($userRow = mysqli_fetch_assoc($usersql_queryStudentsForm)) {
+        $FacultyID = $userRow['faculty_Id'];
+
+        mysqli_data_seek($sqlCategories_queryStudentsForm, 0);
+
+        while ($categoriesRow = mysqli_fetch_assoc($sqlCategories_queryStudentsForm)) {
+            $category = $categoriesRow['categories'];
+
+            $sqlRatingsStudentsForm = "
+                SELECT semester, academic_year, studentsform.* 
+                FROM `studentsform`
+                WHERE toFacultyID = '$FacultyID' 
+                ORDER BY academic_year ASC
+            ";
+            $ratingsQuery = mysqli_query($con, $sqlRatingsStudentsForm);
+
+            if (mysqli_num_rows($ratingsQuery) > 0) {
+                while ($ratingRow = mysqli_fetch_assoc($ratingsQuery)) {
+                    $semesterStudentsForm = $ratingRow['semester'];
+                    $academicYearStudentsForm = $ratingRow['academic_year'];
+
+                    if (!isset($categoryAveragesStudentsForm[$category][$academicYearStudentsForm][$semesterStudentsForm])) {
+                        $categoryAveragesStudentsForm[$category][$academicYearStudentsForm][$semesterStudentsForm] = [
+                            'totalRating' => 0,
+                            'ratingCount' => 0
+                        ];
+                    }
+
+                    $sqlcriteria = "SELECT * FROM `studentscriteria` WHERE studentsCategories = '$category'";
+                    $resultCriteria = mysqli_query($con, $sqlcriteria);
+
+                    if (mysqli_num_rows($resultCriteria) > 0) {
+                        while ($criteriaRow = mysqli_fetch_assoc($resultCriteria)) {
+                            $columnName = sanitizeColumnName($criteriaRow['studentsCategories']);
+                            $finalColumnName = $columnName . $criteriaRow['id'];
+
+                            $criteriaRating = $ratingRow[$finalColumnName] ?? null;
+
+                            if ($criteriaRating !== null && $criteriaRating >= 1 && $criteriaRating <= 5) {
+                                $categoryAveragesStudentsForm[$category][$academicYearStudentsForm][$semesterStudentsForm]['totalRating'] += $criteriaRating;
+                                $categoryAveragesStudentsForm[$category][$academicYearStudentsForm][$semesterStudentsForm]['ratingCount']++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+$graphDataStudentsForm = [];
+foreach ($categoryAveragesStudentsForm as $category => $academicYears) {
+    foreach ($academicYears as $academicYearStudentsForm => $semestersStudentsForm) {
+        foreach ($semestersStudentsForm as $semesterStudentsForm => $data) {
+            $averageRatingStudentsForm = ($data['ratingCount'] > 0) ? ($data['totalRating'] / $data['ratingCount']) : 0;
+            $graphDataStudentsForm[$category][$academicYearStudentsForm][$semesterStudentsForm] = number_format($averageRatingStudentsForm, 2, '.', '');
+        }
+    }
+}
+
+$distinctYearsAndSemestersSqlStudentsForm = "
+    SELECT DISTINCT academic_year, semester 
+    FROM studentsform 
+    WHERE academic_year IS NOT NULL AND academic_year != ''
+      AND semester IS NOT NULL AND semester != ''
+    ORDER BY academic_year ASC, semester ASC
+";
+
+$distinctYearsAndSemestersQueryStudentsForm = mysqli_query($con, $distinctYearsAndSemestersSqlStudentsForm);
+
+$distinctYearsAndSemestersStudentsForm = [];
+while ($rowStudentsForm = mysqli_fetch_assoc($distinctYearsAndSemestersQueryStudentsForm)) {
+    $distinctYearsAndSemestersStudentsForm[] = $rowStudentsForm['semester'] . ' ' . $rowStudentsForm['academic_year'];
+}
+
+
+?>
+
+<?php
+
+include "../../model/dbconnection.php";
+
+$usersqlPeertoPeerForm = "SELECT * FROM `instructor`";
+$usersql_queryPeertoPeerForm = mysqli_query($con, $usersqlPeertoPeerForm);
+if (!$usersql_queryPeertoPeerForm) {
+    echo "Query failed: " . mysqli_error($con);
+    exit;
+}
+
+$sqlCategoriesPeertoPeerForm = "SELECT * FROM `facultycategories`";
+$sqlCategories_queryPeertoPeerForm = mysqli_query($con, $sqlCategoriesPeertoPeerForm);
+if (!$sqlCategories_queryPeertoPeerForm) {
+    echo "Query failed: " . mysqli_error($con);
+    exit;
+}
+
+$categoryAveragesPeertoPeerForm = [];
+
+if (mysqli_num_rows($usersql_queryPeertoPeerForm) > 0) {
+    while ($userRow = mysqli_fetch_assoc($usersql_queryPeertoPeerForm)) {
+        $FacultyID = $userRow['faculty_Id'];
+
+        mysqli_data_seek($sqlCategories_queryPeertoPeerForm, 0);
+
+        while ($categoriesRow = mysqli_fetch_assoc($sqlCategories_queryPeertoPeerForm)) {
+            $category = $categoriesRow['categories'];
+
+            $sqlRatingsPeertoPeerForm = "
+                SELECT semester, academic_year, peertopeerform.* 
+                FROM `peertopeerform`
+                WHERE toFacultyID = '$FacultyID' 
+                ORDER BY academic_year ASC
+            ";
+            $ratingsQuery = mysqli_query($con, $sqlRatingsPeertoPeerForm);
+
+            if (mysqli_num_rows($ratingsQuery) > 0) {
+                while ($ratingRow = mysqli_fetch_assoc($ratingsQuery)) {
+                    $semesterPeertoPeerForm = $ratingRow['semester'];
+                    $academicYearPeertoPeerForm = $ratingRow['academic_year'];
+
+                    if (!isset($categoryAveragesPeertoPeerForm[$category][$academicYearPeertoPeerForm][$semesterPeertoPeerForm])) {
+                        $categoryAveragesPeertoPeerForm[$category][$academicYearPeertoPeerForm][$semesterPeertoPeerForm] = [
+                            'totalRating' => 0,
+                            'ratingCount' => 0
+                        ];
+                    }
+
+                    $sqlcriteria = "SELECT * FROM `facultycriteria` WHERE facultyCategories = '$category'";
+                    $resultCriteria = mysqli_query($con, $sqlcriteria);
+
+                    if (mysqli_num_rows($resultCriteria) > 0) {
+                        while ($criteriaRow = mysqli_fetch_assoc($resultCriteria)) {
+                            $columnName = sanitizeColumnName($criteriaRow['facultyCategories']);
+                            $finalColumnName = $columnName . $criteriaRow['id'];
+
+                            $criteriaRating = $ratingRow[$finalColumnName] ?? null;
+
+                            if ($criteriaRating !== null && $criteriaRating >= 1 && $criteriaRating <= 5) {
+                                $categoryAveragesPeertoPeerForm[$category][$academicYearPeertoPeerForm][$semesterPeertoPeerForm]['totalRating'] += $criteriaRating;
+                                $categoryAveragesPeertoPeerForm[$category][$academicYearPeertoPeerForm][$semesterPeertoPeerForm]['ratingCount']++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+$graphDataPeertoPeerForm = [];
+foreach ($categoryAveragesPeertoPeerForm as $category => $academicYears) {
+    foreach ($academicYears as $academicYearPeertoPeerForm => $semestersPeertoPeerForm) {
+        foreach ($semestersPeertoPeerForm as $semesterPeertoPeerForm => $data) {
+            $averageRatingPeertoPeerForm = ($data['ratingCount'] > 0) ? ($data['totalRating'] / $data['ratingCount']) : 0;
+            $graphDataPeertoPeerForm[$category][$academicYearPeertoPeerForm][$semesterPeertoPeerForm] = number_format($averageRatingPeertoPeerForm, 2, '.', '');
+        }
+    }
+}
+
+$distinctYearsAndSemestersSqlPeertoPeerForm = "
+    SELECT DISTINCT academic_year, semester 
+    FROM peertopeerform 
+        WHERE academic_year IS NOT NULL AND academic_year != ''
+      AND semester IS NOT NULL AND semester != ''
+    ORDER BY academic_year ASC, semester ASC
+";
+$distinctYearsAndSemestersQueryPeertoPeerForm = mysqli_query($con, $distinctYearsAndSemestersSqlPeertoPeerForm);
+
+$distinctYearsAndSemestersPeertoPeerForm = [];
+while ($rowPeertoPeerForm = mysqli_fetch_assoc($distinctYearsAndSemestersQueryPeertoPeerForm)) {
+    $distinctYearsAndSemestersPeertoPeerForm[] = $rowPeertoPeerForm['semester'] . ' ' . $rowPeertoPeerForm['academic_year'];
+}
 
 ?>
 
@@ -233,6 +453,74 @@ $semestersJson = json_encode($semesters);
     <section class="contentContainer">
 
         <div class="d-flex justify-content-evenly mb-5">
+            <div class="container mt-5">
+                <h4 class="text-center">Consolidated Faculty Development Evaluatation of the CICS Department</h4>
+                <div class="d-flex justify-content-evenly px-5 mx-5 mb-3">
+                    <div class="mx-3">
+                        <label for="fromSemesterStudentsForm" class="form-label">From:</label>
+                        <select id="fromSemesterStudentsForm" class="form-select">
+                            <?php foreach ($distinctYearsAndSemestersStudentsForm as $yearSemesterStudentsForm): ?>
+                                <option value="<?php echo $yearSemesterStudentsForm; ?>">
+                                    <?php echo $yearSemesterStudentsForm; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="mx-3">
+                        <label for="toSemesterStudentsForm" class="form-label">To:</label>
+                        <select id="toSemesterStudentsForm" class="form-select">
+                            <?php foreach ($distinctYearsAndSemestersStudentsForm as $yearSemesterStudentsForm): ?>
+                                <option value="<?php echo $yearSemesterStudentsForm; ?>">
+                                    <?php echo $yearSemesterStudentsForm; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <button class="btn btn-success" id="printBtnConsolidatedFaculty">Print</button>
+                    </div>
+                </div>
+
+                <canvas id="ratingGraphStudentsForm" width="800" height="400"></canvas>
+
+            </div>
+            <div class="container mt-5">
+                <h4 class="text-center">Consolidated Peer-to-Peer Faculty Evaluation of the CICS Department</h4>
+                <div class="d-flex justify-content-evenly px-5 mx-5 mb-3">
+                    <div class="mx-3">
+                        <label for="fromSemesterPeertoPeerForm" class="form-label">From:</label>
+                        <select id="fromSemesterPeertoPeerForm" class="form-select">
+                            <?php foreach ($distinctYearsAndSemestersPeertoPeerForm as $yearSemesterPeertoPeerForm): ?>
+                                <option value="<?php echo $yearSemesterPeertoPeerForm; ?>">
+                                    <?php echo $yearSemesterPeertoPeerForm; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="mx-3">
+                        <label for="toSemesterPeertoPeerForm" class="form-label">To:</label>
+                        <select id="toSemesterPeertoPeerForm" class="form-select">
+                            <?php foreach ($distinctYearsAndSemestersPeertoPeerForm as $yearSemesterPeertoPeerForm): ?>
+                                <option value="<?php echo $yearSemesterPeertoPeerForm; ?>">
+                                    <?php echo $yearSemesterPeertoPeerForm; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <button class="btn btn-success" id="printBtnConsolidatedPeertoPeer">Print</button>
+                    </div>
+                </div>
+
+                <canvas id="ratingGraphPeertoPeerForm" width="800" height="400"></canvas>
+
+            </div>
+        </div>
+
+
+        <div class="d-flex justify-content-evenly mb-5">
             <div class="chart-container  justify-content-center  ">
 
                 <div class="d-flex justify-content-center my-3">
@@ -247,7 +535,7 @@ $semestersJson = json_encode($semesters);
 
             </div>
             <div class="chart-container  justify-content-center">
-                <h3 class="text-center">Latest Peer to Peer Evaluation REsult</h3>
+                <h3 class="text-center">Latest Peer to Peer Evaluation Result</h3>
                 <canvas id="averageRatingChart" style="min-height: 300px;"></canvas>
             </div>
         </div>
@@ -324,11 +612,6 @@ $semestersJson = json_encode($semesters);
                 <div class="modal-body">
                     <?php
 
-                    function sanitizeColumnName($name)
-                    {
-                        return preg_replace('/[^a-zA-Z0-9_]/', '', trim($name));
-                    }
-
                     $FacultyID = $userRow['faculty_Id'];
                     $sqlSAY = "SELECT DISTINCT  sf.semester, sf.academic_year 
         FROM vcaaexcel sf
@@ -390,6 +673,295 @@ $semestersJson = json_encode($semesters);
 
     <script src="../../public/js/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+    <script>
+
+        const graphDataStudentsForm = <?php echo json_encode($graphDataStudentsForm); ?>;
+
+        const datasetsStudentsForm = [];
+        const labelsStudentsForm = [];
+
+        Object.keys(graphDataStudentsForm).forEach((category, index) => {
+            let semesterLabelsStudentsForm = [];
+            let ratingsStudentsForm = [];
+
+            Object.keys(graphDataStudentsForm[category]).forEach((academicYearStudentsForm) => {
+                Object.keys(graphDataStudentsForm[category][academicYearStudentsForm]).forEach((semesterStudentsForm) => {
+                    const semesterLabelStudentsForm = `${semesterStudentsForm} ${academicYearStudentsForm}`;
+                    if (!labelsStudentsForm.includes(semesterLabelStudentsForm)) {
+                        labelsStudentsForm.push(semesterLabelStudentsForm);
+                    }
+                    semesterLabelsStudentsForm.push(semesterLabelStudentsForm);
+                    ratingsStudentsForm.push(graphDataStudentsForm[category][academicYearStudentsForm][semesterStudentsForm]);
+                });
+            });
+
+            datasetsStudentsForm.push({
+                label: category,
+                data: ratingsStudentsForm,
+                borderColor: `hsl(${index * 60}, 100%, 50%)`,
+                backgroundColor: `hsl(${index * 60}, 100%, 50%)`,
+                fill: false,
+                tension: 0.1
+            });
+        });
+
+        const ctxStudentsForm = document.getElementById('ratingGraphStudentsForm').getContext('2d');
+        const chartStudentsForm = new Chart(ctxStudentsForm, {
+            type: 'line',
+            data: {
+                labels: labelsStudentsForm,
+                datasets: datasetsStudentsForm
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Semester & Academic Year'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Average Rating'
+                        },
+                        min: 0,
+                        max: 5
+                    }
+                }
+            }
+        });
+
+        const fromSemesterSelectStudentsForm = document.getElementById('fromSemesterStudentsForm');
+        const toSemesterSelectStudentsForm = document.getElementById('toSemesterStudentsForm');
+
+        toSemesterSelectStudentsForm.value = toSemesterSelectStudentsForm.options[toSemesterSelectStudentsForm.options.length - 1].value;
+
+        fromSemesterSelectStudentsForm.addEventListener('change', updateGraphStudentsForm);
+        toSemesterSelectStudentsForm.addEventListener('change', updateGraphStudentsForm);
+
+        function updateGraphStudentsForm() {
+            const fromSemesterStudentsForm = fromSemesterSelectStudentsForm.value;
+            const toSemesterStudentsForm = toSemesterSelectStudentsForm.value;
+
+            filterToSelectOptionsStudentsForm(fromSemesterStudentsForm);
+
+            const filteredDataStudentsForm = filterGraphDataStudentsForm(fromSemesterStudentsForm, toSemesterStudentsForm);
+
+            chartStudentsForm.data.labels = filteredDataStudentsForm.labels;
+            chartStudentsForm.data.datasets = filteredDataStudentsForm.datasets;
+            chartStudentsForm.update();
+        }
+
+        function filterGraphDataStudentsForm(fromSemesterStudentsForm, toSemesterStudentsForm) {
+            let filteredLabels = [];
+            let filteredDatasets = [];
+
+            Object.keys(graphDataStudentsForm).forEach((category, index) => {
+                let semesterLabelsStudentsForm = [];
+                let ratingsStudentsForm = [];
+
+                Object.keys(graphDataStudentsForm[category]).forEach((academicYearStudentsForm) => {
+                    Object.keys(graphDataStudentsForm[category][academicYearStudentsForm]).forEach((semesterStudentsForm) => {
+                        const semesterLabelStudentsForm = `${semesterStudentsForm} ${academicYearStudentsForm}`;
+                        if (isSemesterInRangeStudentsForm(semesterLabelStudentsForm, fromSemesterStudentsForm, toSemesterStudentsForm)) {
+                            if (!filteredLabels.includes(semesterLabelStudentsForm)) {
+                                filteredLabels.push(semesterLabelStudentsForm);
+                            }
+                            semesterLabelsStudentsForm.push(semesterLabelStudentsForm);
+                            ratingsStudentsForm.push(graphDataStudentsForm[category][academicYearStudentsForm][semesterStudentsForm]);
+                        }
+                    });
+                });
+
+                filteredDatasets.push({
+                    label: category,
+                    data: ratingsStudentsForm,
+                    borderColor: `hsl(${index * 60}, 100%, 50%)`,
+                    backgroundColor: `hsl(${index * 60}, 100%, 50%)`,
+                    fill: false,
+                    tension: 0.1
+                });
+            });
+
+            return { labels: filteredLabels, datasets: filteredDatasets };
+        }
+
+        function filterToSelectOptionsStudentsForm(fromSemesterStudentsForm) {
+            const toSelectStudentsForm = document.getElementById('toSemesterStudentsForm');
+
+            const [fromSemester, fromYear] = fromSemesterStudentsForm.split(' ');
+
+            Array.from(toSelectStudentsForm.options).forEach((option) => {
+                const [optionSemester, optionYear] = option.value.split(' ');
+
+                if (optionYear < fromYear || (optionYear === fromYear && optionSemester < fromSemester)) {
+                    option.disabled = true;
+                } else {
+                    option.disabled = false;
+                }
+            });
+        }
+
+        function isSemesterInRangeStudentsForm(semesterLabelStudentsForm, fromSemesterStudentsForm, toSemesterStudentsForm) {
+            const [semester, academicYear] = semesterLabelStudentsForm.split(' ');
+            const [fromSemester, fromYear] = fromSemesterStudentsForm.split(' ');
+            const [toSemester, toYear] = toSemesterStudentsForm.split(' ');
+
+            const isAfterFrom = (academicYear > fromYear) || (academicYear === fromYear && semester >= fromSemester);
+            const isBeforeTo = (academicYear < toYear) || (academicYear === toYear && semester <= toSemester);
+
+            return isAfterFrom && isBeforeTo;
+        }
+
+    </script>
+
+    <script>
+        const graphDataPeertoPeerForm = <?php echo json_encode($graphDataPeertoPeerForm); ?>;
+
+        const datasetsPeertoPeerForm = [];
+        const labelsPeertoPeerForm = [];
+
+        Object.keys(graphDataPeertoPeerForm).forEach((category, index) => {
+            let semesterLabelsPeertoPeerForm = [];
+            let ratingsPeertoPeerForm = [];
+
+            Object.keys(graphDataPeertoPeerForm[category]).forEach((academicYearPeertoPeerForm) => {
+                Object.keys(graphDataPeertoPeerForm[category][academicYearPeertoPeerForm]).forEach((semesterPeertoPeerForm) => {
+                    const semesterLabelPeertoPeerForm = `${semesterPeertoPeerForm} ${academicYearPeertoPeerForm}`;
+                    if (!labelsPeertoPeerForm.includes(semesterLabelPeertoPeerForm)) {
+                        labelsPeertoPeerForm.push(semesterLabelPeertoPeerForm);
+                    }
+                    semesterLabelsPeertoPeerForm.push(semesterLabelPeertoPeerForm);
+                    ratingsPeertoPeerForm.push(graphDataPeertoPeerForm[category][academicYearPeertoPeerForm][semesterPeertoPeerForm]);
+                });
+            });
+
+            datasetsPeertoPeerForm.push({
+                label: category,
+                data: ratingsPeertoPeerForm,
+                borderColor: `hsl(${index * 60}, 100%, 50%)`,
+                backgroundColor: `hsl(${index * 60}, 100%, 50%)`,
+                fill: false,
+                tension: 0.1
+            });
+        });
+
+        const ctxPeertoPeerForm = document.getElementById('ratingGraphPeertoPeerForm').getContext('2d');
+        const chartPeertoPeerForm = new Chart(ctxPeertoPeerForm, {
+            type: 'line',
+            data: {
+                labels: labelsPeertoPeerForm,  // Fixed: 'labels' instead of 'labelsPeertoPeerForm'
+                datasets: datasetsPeertoPeerForm  // Fixed: 'datasets' instead of 'datasetsPeertoPeerForm'
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Semester & Academic Year'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Average Rating'
+                        },
+                        min: 0,
+                        max: 5
+                    }
+                }
+            }
+        });
+
+        // Event listeners
+        const fromSemesterSelectPeertoPeerForm = document.getElementById('fromSemesterPeertoPeerForm');
+        const toSemesterSelectPeertoPeerForm = document.getElementById('toSemesterPeertoPeerForm');
+
+        toSemesterSelectPeertoPeerForm.value = toSemesterSelectPeertoPeerForm.options[toSemesterSelectPeertoPeerForm.options.length - 1].value;
+
+        fromSemesterSelectPeertoPeerForm.addEventListener('change', updateGraphPeertoPeerForm);
+        toSemesterSelectPeertoPeerForm.addEventListener('change', updateGraphPeertoPeerForm);
+
+        function updateGraphPeertoPeerForm() {
+            const fromSemesterPeertoPeerForm = fromSemesterSelectPeertoPeerForm.value;
+            const toSemesterPeertoPeerForm = toSemesterSelectPeertoPeerForm.value;
+
+            filterToSelectOptionsPeertoPeerForm(fromSemesterPeertoPeerForm);
+
+            const filteredDataPeertoPeerForm = filterGraphDataPeertoPeerForm(fromSemesterPeertoPeerForm, toSemesterPeertoPeerForm);
+
+            chartPeertoPeerForm.data.labels = filteredDataPeertoPeerForm.labels;   // Fixed: 'labels' instead of 'labelsPeertoPeerForm'
+            chartPeertoPeerForm.data.datasets = filteredDataPeertoPeerForm.datasets;  // Fixed: 'datasets' instead of 'datasetsPeertoPeerForm'
+            chartPeertoPeerForm.update();
+        }
+
+        function filterGraphDataPeertoPeerForm(fromSemesterPeertoPeerForm, toSemesterPeertoPeerForm) {
+            let filteredLabels = [];
+            let filteredDatasets = [];
+
+            Object.keys(graphDataPeertoPeerForm).forEach((category, index) => {
+                let semesterLabelsPeertoPeerForm = [];
+                let ratingsPeertoPeerForm = [];
+
+                Object.keys(graphDataPeertoPeerForm[category]).forEach((academicYearPeertoPeerForm) => {
+                    Object.keys(graphDataPeertoPeerForm[category][academicYearPeertoPeerForm]).forEach((semesterPeertoPeerForm) => {
+                        const semesterLabelPeertoPeerForm = `${semesterPeertoPeerForm} ${academicYearPeertoPeerForm}`;
+                        if (isSemesterInRangePeertoPeerForm(semesterLabelPeertoPeerForm, fromSemesterPeertoPeerForm, toSemesterPeertoPeerForm)) {
+                            if (!filteredLabels.includes(semesterLabelPeertoPeerForm)) {
+                                filteredLabels.push(semesterLabelPeertoPeerForm);
+                            }
+                            semesterLabelsPeertoPeerForm.push(semesterLabelPeertoPeerForm);
+                            ratingsPeertoPeerForm.push(graphDataPeertoPeerForm[category][academicYearPeertoPeerForm][semesterPeertoPeerForm]);
+                        }
+                    });
+                });
+
+                filteredDatasets.push({
+                    label: category,
+                    data: ratingsPeertoPeerForm,
+                    borderColor: `hsl(${index * 60}, 100%, 50%)`,
+                    backgroundColor: `hsl(${index * 60}, 100%, 50%)`,
+                    fill: false,
+                    tension: 0.1
+                });
+            });
+
+            return { labels: filteredLabels, datasets: filteredDatasets };  // Fixed: 'labels' and 'datasets' instead of 'labelsPeertoPeerForm' and 'datasetsPeertoPeerForm'
+        }
+
+
+        function filterToSelectOptionsPeertoPeerForm(fromSemesterPeertoPeerForm) {
+            const toSelectPeertoPeerForm = document.getElementById('toSemesterPeertoPeerForm');
+
+            const [fromSemesterPeertoPeerForms, fromYear] = fromSemesterPeertoPeerForm.split(' ');
+
+            Array.from(toSelectPeertoPeerForm.options).forEach((option) => {
+                const [optionSemester, optionYear] = option.value.split(' ');
+
+                if (optionYear < fromYear || (optionYear === fromYear && optionSemester < fromSemesterPeertoPeerForms)) {
+                    option.disabled = true;
+                } else {
+                    option.disabled = false;
+                }
+            });
+        }
+
+
+        function isSemesterInRangePeertoPeerForm(semesterLabelPeertoPeerForm, fromSemesterPeertoPeerForm, toSemesterPeertoPeerForm) {
+            const [semesterPeertoPeerForm, academicYearPeertoPeerForm] = semesterLabelPeertoPeerForm.split(' ');
+            const [fromSemesterPeertoPeerForms, fromAcademicYearPeertoPeerForms] = fromSemesterPeertoPeerForm.split(' ');
+            const [toSemesterPeertoPeerForms, toAcademicYearPeertoPeerForms] = toSemesterPeertoPeerForm.split(' ');
+
+            const isAfterFromPeertoPeerForms = (academicYearPeertoPeerForm > fromAcademicYearPeertoPeerForms) || (academicYearPeertoPeerForm === fromAcademicYearPeertoPeerForms && semesterPeertoPeerForm >= fromSemesterPeertoPeerForms);
+            const isBeforeToPeertoPeerForms = (academicYearPeertoPeerForm < toAcademicYearPeertoPeerForms) || (academicYearPeertoPeerForm === toAcademicYearPeertoPeerForms && semesterPeertoPeerForm <= toSemesterPeertoPeerForms);
+
+            return isAfterFromPeertoPeerForms && isBeforeToPeertoPeerForms;
+        }
+    </script>
 
     <script>
         function printPartOfPage(elementId) {
@@ -746,7 +1318,7 @@ $semestersJson = json_encode($semesters);
                 var printCanvas = printWindow.document.getElementById('printCanvas');
                 var printCtx = printCanvas.getContext('2d');
 
-                const scaleFactor = 0.65;
+                const scaleFactor = 0.9;
                 printCanvas.width = originalCanvas.width * scaleFactor;
                 printCanvas.height = originalCanvas.height * scaleFactor;
 
@@ -761,6 +1333,12 @@ $semestersJson = json_encode($semesters);
 
             $('#printBtn').click(function () {
                 printPartOfPage('barChart');
+            });
+            $('#printBtnConsolidatedFaculty').click(function () {
+                printPartOfPage('ratingGraphStudentsForm');
+            });
+            $('#printBtnConsolidatedPeertoPeer').click(function () {
+                printPartOfPage('ratingGraphPeertoPeerForm');
             });
         });
 

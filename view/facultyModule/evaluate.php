@@ -2,6 +2,7 @@
 
 include "components/navBar.php";
 include "../../model/dbconnection.php";
+$facultyID = $userRow["faculty_Id"];
 ?>
 
 <head>
@@ -53,6 +54,54 @@ include "../../model/dbconnection.php";
 
 
         <div class="tab-pane fade active show" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+            <div class="d-flex justify-content-evenly">
+                <?php
+                $countWhoSQL = "SELECT COUNT(*) AS count FROM randomfaculty WHERE random_Id = '$facultyID'";
+                $countWhoSQL_query = mysqli_query($con, $countWhoSQL);
+
+                $selectDistinct = "SELECT semester , academic_year FROM `randomfaculty`";
+                $selectDistinct_query = mysqli_query($con, $selectDistinct);
+                $selectDistinctRow = mysqli_fetch_assoc($selectDistinct_query);
+                $distinctSemester = $selectDistinctRow['semester'];
+                $distinctAcademicYear = $selectDistinctRow['academic_year'];
+
+                if (mysqli_num_rows($countWhoSQL_query) > 0) {
+                    while ($countWhoSQLRow = mysqli_fetch_assoc($countWhoSQL_query)) {
+
+                        $countWhoForm = "SELECT COUNT(*) AS count FROM peertopeerform WHERE toFacultyID = '$facultyID' AND semester = '$distinctSemester' AND academic_year = '$distinctAcademicYear'";
+                        $countWhoForm_query = mysqli_query($con, $countWhoForm);
+                        $countWhoFormRow = mysqli_fetch_assoc($countWhoForm_query);
+
+                        ?>
+                        <div>
+                            <h3>Number of faculty who evaluated you: <span
+                                    class="fw-bold"><?php echo $countWhoFormRow['count'] ?> /
+                                    <?php echo $countWhoSQLRow['count']; ?></span>
+                            </h3>
+                        </div>
+                        <?php
+                    }
+                }
+                $countYouSQL = "SELECT COUNT(*) AS count FROM randomfaculty WHERE faculty_Id = '$facultyID'";
+                $countYouSQL_query = mysqli_query($con, $countYouSQL);
+
+                if (mysqli_num_rows($countYouSQL_query) > 0) {
+                    while ($countYouSQLRow = mysqli_fetch_assoc($countYouSQL_query)) {
+
+                        $countWhoForm = "SELECT COUNT(*) AS count FROM peertopeerform WHERE fromFacultyID = '$facultyID' AND semester = '$distinctSemester' AND academic_year = '$distinctAcademicYear'";
+                        $countWhoForm_query = mysqli_query($con, $countWhoForm);
+                        $countWhoFormRow = mysqli_fetch_assoc($countWhoForm_query);
+
+                        ?>
+                        <div>
+                            <h3>Number of faculty you evaluated: <span class="fw-bold"><?php echo $countWhoFormRow['count'] ?> /
+                                    <?php echo $countYouSQLRow['count']; ?></span></h3>
+                        </div>
+                        <?php
+                    }
+                }
+                ?>
+            </div>
             <div class="contentTable">
                 <table class="table table-striped table-bordered text-center align-middle w-100">
                     <thead>
@@ -64,7 +113,7 @@ include "../../model/dbconnection.php";
                     </thead>
                     <tbody>
                         <?php
-                        $facultyID = $userRow["faculty_Id"];
+
 
                         $sqlrandom = "SELECT * FROM `randomfaculty` WHERE faculty_Id = '$facultyID' AND doneStatus=0";
                         $sqlrandom_query = mysqli_query($con, $sqlrandom);
@@ -439,31 +488,29 @@ include "../../model/dbconnection.php";
                             while ($archivedRow = mysqli_fetch_assoc($archivedSQL_query)) {
                                 $officialId = htmlspecialchars($archivedRow['id'], ENT_QUOTES, 'UTF-8');
                                 echo '
-                        <tr>
-                            <td class="official_id" hidden>' . $officialId . '</td>
-                            <td data-toFaculty="' . $archivedRow['toFacultyID'] . '" hidden>' . $archivedRow['toFacultyID'] . '</td>
-                            <td>' . $archivedRow['toFaculty'] . '</td>
-                            <td>' . $archivedRow['semester'] . '</td>
-                            <td>' . $archivedRow['academic_year'] . '</td>
-                            <td><a href="#" class="view-btn btn btn-success">Print</a></td>
-                        </tr>
-                        ';
-
-
-
+                            <tr>
+                                <td class="official_id" hidden>' . $officialId . '</td>
+                                <td data-toFaculty="' . $archivedRow['toFacultyID'] . '" hidden>' . $archivedRow['toFacultyID'] . '</td>
+                                <td>' . $archivedRow['toFaculty'] . '</td>
+                                <td>' . $archivedRow['semester'] . '</td>
+                                <td>' . $archivedRow['academic_year'] . '</td>
+                                <td><a href="#" class="view-btn btn btn-success">Print</a></td>
+                            </tr>
+                            ';
                                 ?>
-                            </tbody>
-                        </table>
 
-                    </div>
-                    <?php
+
+
+                                <?php
                             }
                         } else {
                             echo "<h2 style='text-align: center; color: red;'>No evaluation found for this instructor.</h2>";
                         }
                         ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
-
     </div>
 
 
@@ -472,10 +519,8 @@ include "../../model/dbconnection.php";
         role="dialog" aria-labelledby="officialviewmodalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-
                 <div class="modal-body officialviewmodal">
                 </div>
-
             </div>
         </div>
     </div>

@@ -1,8 +1,69 @@
 <?php
 
 include "components/navBar.php";
+include "../../model/dbconnection.php";
 
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['selected_date'])) {
+    $selectedDate = $_POST['selected_date'];
+
+    // Check if there's already an entry with id = 1
+    $checkSql = "SELECT * FROM classroomdate WHERE id = 1";
+    $result = $con->query($checkSql);
+
+    if ($result->num_rows > 0) {
+        // If entry with id = 1 exists, update it
+        $updateSql = "UPDATE classroomdate SET classdate = ? WHERE id = 1";
+        $updateStmt = $con->prepare($updateSql);
+        $updateStmt->bind_param("s", $selectedDate);
+
+        if ($updateStmt->execute()) {
+            echo "Date updated successfully!";
+        } else {
+            echo "Error updating date: " . $con->error;
+        }
+
+        $updateStmt->close();
+    } else {
+        // If no entry with id = 1, insert it
+        $insertSql = "INSERT INTO classroomdate (id, classdate) VALUES (1, ?)";
+        $insertStmt = $con->prepare($insertSql);
+        $insertStmt->bind_param("s", $selectedDate);
+
+        if ($insertStmt->execute()) {
+            echo "Date saved successfully!";
+        } else {
+            echo "Error saving date: " . $con->error;
+        }
+
+        $insertStmt->close();
+    }
+
+    $con->close();
+    exit;
+}
+
+
+$sqlSAYSelect = "SELECT * FROM academic_year_semester WHERE id =2";
+$result = mysqli_query($con, $sqlSAYSelect);
+$selectSAY = mysqli_fetch_assoc($result);
+
+$semester = $selectSAY['semester'];
+$academic_year = $selectSAY['academic_year'];
+
+// Query to get the selected_date from the database (assuming id = 1)
+$sql = "SELECT classdate FROM classroomdate WHERE id = 1";
+$result = $con->query($sql);
+
+// Fetch the result
+if ($result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    $startDate = $row['classdate'];
+    $selectedDate = $row['classdate'];  // Get the selected date value from the database
+} else {
+    $selectedDate = ''; // Default to empty if no data found
+}
 ?>
+
 
 <head>
 
@@ -56,43 +117,124 @@ include "components/navBar.php";
 
     <nav>
         <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
-            <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home"
-                type="button" role="tab" aria-controls="nav-home" aria-selected="true">Classroom Observation</button>
+            <button class="nav-link active" id="nav-faculty-tab" data-bs-toggle="tab" data-bs-target="#nav-faculty"
+                type="button" role="tab" aria-controls="nav-faculty" aria-selected="true">Classroom Observation
+                Faculty List</button>
+            <button class="nav-link" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button"
+                role="tab" aria-controls="nav-home" aria-selected="true">Classroom Observation
+                Evaluation</button>
             <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile"
                 type="button" role="tab" aria-controls="nav-profile" aria-selected="false">Classroom Observation
                 Results</button>
         </div>
     </nav>
     <div class="tab-content p-3 border shadow-md overflow-auto" id="nav-tabContent">
-        <div class="tab-pane fade active show" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
 
+        <div class="tab-pane fade active show" id="nav-faculty" role="tabpanel" aria-labelledby="nav-faculty-tab">
             <div class="d-flex justify-content-evenly">
-                <div class="text-center d-flex flex-column justify-content-center align-items-center">
+                <!-- <div class="text-center d-flex flex-column justify-content-center align-items-center">
                     <label for="view-date-select" class="form-label fw-bold px-3 py-2">Select a date one week before
                         the end of classroom observation for
                         auto-booking:</label>
                     <input type="date" class=" shadow-sm rounded-3 px-3 py-2 border-2 " id="date-select-auto"
                         style=" padding-right: 10px; ">
-                </div>
-
+                </div> -->
+                <h2 class="text-center">Classroom Observation for <br>Academic Year <span
+                        class="fw-bold"><?php echo $academic_year ?></span>, Semester
+                    <span class="fw-bold"><?php echo $semester ?> </span>
+                </h2>
                 <!-- DATE SELECTION -->
                 <div class="text-center d-flex flex-column justify-content-center align-items-center">
                     <label for="view-date-select" class="form-label fw-bold ">Select
-                        Date:</label>
+                        Date for Classroom Observation:</label>
                     <input type="date" class=" shadow-sm rounded-3 px-3 py-2 border-2 " id="view-date-select"
-                        style=" padding-right: 10px; ">
+                        onchange="saveDate()" style=" padding-right: 10px; ">
                 </div>
 
 
             </div>
 
+            <!-- <table id="view-reservation-table" class="table table-bordered mt-2 "
+                style="text-align: center; vertical-align: middle;"></table> -->
+
+            <div class="container mt-3">
+                <table class="table table-bordered mt-2 text-center">
+                    <thead>
+                        <tr class="bg-danger ">
+                            <th>Faculty</th>
+                            <th>Course</th>
+                            <th>Selected Date for Observation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+
+                        $sql = "SELECT * FROM `instructor` WHERE userType = 'faculty' AND status = 1";
+                        $sql_query = mysqli_query($con, $sql);
+                        if ($sql_query) {
+                            while ($vcaaRow = mysqli_fetch_assoc($sql_query)) {
+                                $facultyID = $vcaaRow['faculty_Id'];
+                                $sqlSAYs = "SELECT * FROM `academic_year_semester` WHERE id = 2";
+                                $sqlSAY_querys = mysqli_query($con, $sqlSAYs);
+                                $SAYs = mysqli_fetch_assoc($sqlSAY_querys);
+
+                                $nowSemesters = $SAYs['semester'];
+                                $nowAcademicYears = $SAYs['academic_year'];
+
+                                $getVCAA = "SELECT * FROM `bookings` WHERE faculty_Id = '$facultyID' AND academic_year = '$nowAcademicYears' AND semester = '$nowSemesters'";
+                                $getVCAA_query = mysqli_query($con, $getVCAA);
+                                $vcaaValue = mysqli_fetch_assoc($getVCAA_query);
+
+                                $displayRating = isset($vcaaValue['selected_date']) && !is_null($vcaaValue['selected_date'])
+                                    ? (is_object($vcaaValue['selected_date'])
+                                        ? $vcaaValue['selected_date']->format('F d, Y') // Format: "November 04, 2024"
+                                        : date('F d, Y', strtotime($vcaaValue['selected_date']))) // If it's a string, convert it
+                                    : 'No date has been selected yet.';
+
+
+
+                                $displayCourse = isset($vcaaValue['course']) && !is_null($vcaaValue['course'])
+                                    ? $vcaaValue['course']
+                                    : 'No date has been selected yet.';
+                                ?>
+
+
+                                <tr>
+                                    <td><?php echo $vcaaRow['first_name'] . ' ' . $vcaaRow['last_name'] ?></td>
+                                    <td><?php echo $displayCourse ?></td>
+                                    <td><?php echo $displayRating; ?></td>
+
+                                </tr>
+
+                                <?php
+
+
+                            }
+                        }
+
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+
+        <div class="tab-pane fade " id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
 
             <!-- CLASSROOM OBSERVATION TABLE -->
-            <table id="view-reservation-table" class="table table-bordered mt-2 "
-                style="text-align: center; vertical-align: middle;"></table>
+            <!-- <table id="view-reservation-table" class="table table-bordered mt-2 "
+                style="text-align: center; vertical-align: middle;"></table> -->
 
-            <!-- CLASSROOM OBSERVATION FORM -->
-            <div class="modal fade" id="bookingDetailsModal" tabindex="-1" aria-labelledby="bookingDetailsModalLabel"
+
+            <h2 class="text-center">Classroom Observation for <br>Academic Year <span
+                    class="fw-bold"><?php echo $academic_year ?></span>, Semester
+                <span class="fw-bold"><?php echo $semester ?> </span>
+            </h2>
+
+
+
+            <div class="modal fade " id="bookingDetailsModal" tabindex="-1" aria-labelledby="bookingDetailsModalLabel"
                 aria-hidden="true">
 
                 <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -478,7 +620,80 @@ include "components/navBar.php";
 
             </div>
 
+            <div class="d-flex flex-column-reverse justify-content-center mt-3">
+
+                <table class="table table-bordered mt-2 ">
+                    <thead>
+                        <tr class="bg-danger text-center">
+                            <th>Faculty</th>
+                            <th>Course</th>
+                            <th>Room</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $classObserSelect = "SELECT * FROM bookings WHERE academic_year = '$academic_year' AND semester = '$semester' ORDER BY selected_date ASC, start_time DESC";
+                        $classObserSelect_query = mysqli_query($con, $classObserSelect);
+
+                        if (mysqli_num_rows($classObserSelect_query) > 0) {
+                            while ($classRow = mysqli_fetch_assoc($classObserSelect_query)) {
+                                $formattedDate = date('Y-m-d', strtotime($classRow['selected_date']));
+
+                                ?>
+                                <tr class="text-center">
+                                    <td><?php echo $classRow['name']; ?></td>
+                                    <td><?php echo $classRow['course']; ?></td>
+                                    <td><?php echo $classRow['room']; ?></td>
+                                    <td><?php $date = new DateTime($classRow['selected_date']);
+                                    echo $date->format('F j, Y'); ?></td>
+                                    <td>
+                                        <?php
+                                        if ($classRow['evaluation_status'] == 0) {
+                                            ?>
+                                            <button class="btn btn-success booked-evaluate"
+                                                data-slotKey="<?php echo $classRow['slot']; ?>"
+                                                data-selectedDate="<?php echo $formattedDate; ?>"
+                                                data-name="<?php echo $classRow['name']; ?>"
+                                                data-room="<?php echo $classRow['room']; ?>"
+                                                data-facultyId="<?php echo $classRow['faculty_Id']; ?>"
+                                                data-course="<?php echo $classRow['course']; ?>"
+                                                data-startTime="<?php echo $classRow['start_time']; ?>"
+                                                data-endTime="<?php echo $classRow['end_time']; ?>"
+                                                data-slot="<?php echo $classRow['slot']; ?>">
+                                                Evaluate
+                                            </button>
+                                            <?php
+                                        } else {
+                                            ?>
+                                            <button class="btn btn-secondary" disabled>Evaluated</button>
+                                            <?php
+                                        }
+                                        ?>
+
+
+
+
+
+                                    </td>
+                                </tr>
+
+                                <?php
+                            }
+                            ?>
+                            <?php
+                        } else {
+                            echo "<h2 style='text-align: center; color: red;'>No evaluation found for this instructor.</h2>";
+                        }
+
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+
         </div>
+
 
         <div class="tab-pane fade " id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
 
@@ -529,7 +744,9 @@ include "components/navBar.php";
 
                     <tbody id="tableBody">
 
-                        <h1 id="noResults" class="text-center text-danger" style="display: none;">No results found</h1>
+                        <h1 id="noResults" class="text-center text-danger" style="display: none;">No results
+                            found
+                        </h1>
 
                     </tbody>
             </div>
@@ -537,6 +754,10 @@ include "components/navBar.php";
         </div>
 
     </div>
+
+
+
+
 
     <div class="modal fade bg-transparent opacity-1" id="officialviewmodal" style="opacity: transparent" tabindex="-1"
         role="dialog" aria-labelledby="officialviewmodalLabel" aria-hidden="true">
@@ -585,7 +806,44 @@ include "components/navBar.php";
     });
 </script>
 
+<script>
+    // JavaScript function to save date and show SweetAlert
+    function saveDate() {
+        const selectedDate = document.getElementById("view-date-select").value;
 
+        if (selectedDate) {
+            // AJAX request using Fetch API
+            fetch("", { // Empty string to target the same file
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: `selected_date=${selectedDate}`,
+            })
+                .then(response => response.text())
+                .then(data => {
+                    console.log("Date saved:", data);
+                    // Show SweetAlert success message
+                    Swal.fire({
+                        title: "Success!",
+                        text: "Date saved successfully!",
+                        icon: "success",
+                        confirmButtonText: "OK"
+                    });
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    // Show SweetAlert error message
+                    Swal.fire({
+                        title: "Error!",
+                        text: "There was a problem saving the date.",
+                        icon: "error",
+                        confirmButtonText: "OK"
+                    });
+                });
+        }
+    }
+</script>
 <script>
 
     <?php if (isset($_SESSION['status'])): ?>
@@ -605,7 +863,7 @@ include "components/navBar.php";
         if ($preferredScheduleSQL_query && mysqli_num_rows($preferredScheduleSQL_query) > 0) {
             while ($preferredScheduleRow = mysqli_fetch_assoc($preferredScheduleSQL_query)) {
                 ?>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            {
                     name: "<?php echo $preferredScheduleRow['first_name'] . ' ' . $preferredScheduleRow['last_name'] ?>",
                     facultyIdPo: "<?php echo $preferredScheduleRow['faculty_Id'] ?>",
                     schedule: {
@@ -757,8 +1015,13 @@ include "components/navBar.php";
         displayStep(currentStep);
 
         $(document).ready(function () {
-            const today = new Date().toISOString().split('T')[0];
-            $('#view-date-select').val(today);
+            // Get today's date in the format YYYY-MM-DD
+            var today = new Date().toISOString().split('T')[0];
+
+            // Set the min attribute of the date input to today's date
+            $('#view-date-select').attr('min', today);
+            var selectedClassDate = "<?php echo $selectedDate; ?>";
+            $('#view-date-select').val(selectedClassDate);
             loadBookings();
             createReservationTable();
 
@@ -927,6 +1190,96 @@ include "components/navBar.php";
                 $('#view-reservation-table').append(row);
             }
         }
+
+
+
+        $(document).on('click', '.booked-evaluate', function () {
+            const buttonData = $(this).data(); // Get all data attributes as an object
+
+            // Now check individual properties
+            const slotKey = buttonData.slot; // Using `data-slot`
+            const selectedDate = buttonData.selecteddate; // Using `data-selectedDate`
+            const name = buttonData.name; // Using `data-name`
+            const room = buttonData.room; // Using `data-room`
+            const facultyId = buttonData.facultyid; // Using `data-facultyId`
+            const course = buttonData.course; // Using `data-course`
+            const startTime = buttonData.starttime; // Using `data-startTime`
+            const endTime = buttonData.endtime; // Using `data-endTime`
+            const slot = buttonData.slot; // Using `data-slot`
+
+
+
+
+            if (!selectedDate || !facultyId || !startTime || !endTime || !slotKey || !name || !room || !course || !slot) {
+                console.error('One or more required data attributes are missing or undefined');
+                return; // Exit the function if any critical data is missing
+            }
+
+
+            const today = new Date().toISOString().split('T')[0];
+
+            // Check if selectedDate is valid
+            const bookingDateObj = new Date(selectedDate);
+            if (!isNaN(bookingDateObj.getTime())) {
+                const bookingDate = bookingDateObj.toISOString().split('T')[0];
+
+                // Validate the booking date
+                if (bookingDate === today) {
+                    // If the booking has already been evaluated, show a warning
+                    if (isBookingEvaluated(slotKey)) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Already Evaluated',
+                            text: 'This booking has already been evaluated and cannot be re-evaluated.',
+                            confirmButtonText: 'OK'
+                        });
+                    } else {
+                        const dateConvert = new Date(buttonData.selecteddate);
+                        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                        const formattedDateText = dateConvert.toLocaleDateString('en-US', options);
+
+                        // Pre-fill the modal with the booking data
+                        $('#facultyInput').val(name);
+                        $('#booking-room').val(room);
+                        $('#toFacultyID').val(facultyId);
+                        $('#courseInput').val(course);
+                        $('#startTime').val(startTime);
+                        $('#endTime').val(endTime);
+                        $('#slot-key').val(slot);
+                        $('#selectedDate').val(selectedDate);
+                        $('#dateInput').val(formattedDateText);
+
+                        // Show the evaluation modal
+                        $('#bookingDetailsModal').modal('show');
+                    }
+                } else if (bookingDate > today) {
+                    // Handle future bookings
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Observation Unavailable',
+                        text: 'This classroom observation is scheduled for a future date. You can only evaluate observations set for today.',
+                        confirmButtonText: 'Understood'
+                    });
+                } else {
+                    // Handle past bookings
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Observation Unavailable',
+                        text: 'This observation has already passed.',
+                        confirmButtonText: 'Understood'
+                    });
+                }
+            } else {
+                console.error('Invalid booking date:', selectedDate);
+            }
+        });
+
+        // Dummy function to check if a booking is already evaluated
+        function isBookingEvaluated(slotKey) {
+            // Replace this logic with the actual check (from your database or frontend data)
+            return false; // Example, return true if evaluated
+        }
+
 
         $(document).on('click', '.booked-slot', function () {
             const slotKey = $(this).data('slotKey');

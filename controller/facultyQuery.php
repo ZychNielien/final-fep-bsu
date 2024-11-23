@@ -94,8 +94,8 @@ if (isset($_POST['addFaculty'])) {
 
         if ($file_size > 2 * 1024 * 1024) {
             $_SESSION['status'] = "File size exceeds 2MB limit.";
-            $_SESSION['status-code'] = "error";
-            header('Location: ../view/adminModule/faculty.php');
+            $_SESSION['status_code'] = "error";
+            header("Location: ../index.php");
             exit();
         }
 
@@ -107,27 +107,26 @@ if (isset($_POST['addFaculty'])) {
                 $stmt->bind_param("ssssss", $img_des, $firstname, $lastname, $gsuite, $password, $usertype);
 
                 if ($stmt->execute()) {
-                    $_SESSION['status'] = "Faculty Member Added Successfully";
-                    $_SESSION['status-code'] = "success";
+                    $_SESSION['status'] = "Registration successful. Please wait for admin approval before logging in. Your default password is the uppercase of your last name, and your email is firstname.lastname@g.batstate-u.edu.ph.";
+                    $_SESSION['status_code'] = "success";
                 } else {
                     $_SESSION['status'] = "Something went wrong: " . $stmt->error;
-                    $_SESSION['status-code'] = "error";
+                    $_SESSION['status_code'] = "error";
                 }
                 $stmt->close();
             } else {
                 $_SESSION['status'] = "Failed to prepare the SQL statement.";
-                $_SESSION['status-code'] = "error";
+                $_SESSION['status_code'] = "error";
             }
         } else {
             $_SESSION['status'] = "Failed to move uploaded file";
-            $_SESSION['status-code'] = "error";
+            $_SESSION['status_code'] = "error";
         }
     } else {
         $_SESSION['status'] = "Image upload is required.";
-        $_SESSION['status-code'] = "error";
+        $_SESSION['status_code'] = "error";
     }
-
-    header('Location: ../view/adminModule/faculty.php');
+    header("Location: ../index.php");
     exit();
 }
 

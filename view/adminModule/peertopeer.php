@@ -125,10 +125,10 @@ include "components/navBar.php"
                 $sql = "SELECT * FROM facultycategories";
                 $sql_query = mysqli_query($con, $sql);
 
-                $semesters_query = "SELECT DISTINCT semester FROM peertopeerform WHERE toFacultyID='$o_id'";
+                $semesters_query = "SELECT DISTINCT semester FROM peertopeerform WHERE toFacultyID='$o_id'  AND semester != '' AND semester IS NOT NULL";
                 $semesters_result = mysqli_query($con, $semesters_query);
 
-                $academic_years_query = "SELECT DISTINCT academic_year FROM peertopeerform WHERE toFacultyID='$o_id'";
+                $academic_years_query = "SELECT DISTINCT academic_year FROM peertopeerform WHERE toFacultyID='$o_id' AND semester != '' AND semester IS NOT NULL";
                 $academic_years_result = mysqli_query($con, $academic_years_query);
 
                 if (mysqli_num_rows($sql_query)) {

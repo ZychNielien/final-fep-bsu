@@ -146,6 +146,105 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
                 </h5>
             </div>
         </div>
+        <div class="d-flex justify-content-evenly align-items-center my-2">
+            <?php
+            $subjectPo = $subject['subject'];
+            $subjectSemester = $subject['semester'];
+            $subjectAcademicYear = $subject['academic_year'];
+            $countSQL = "SELECT 
+            s.section, 
+            COUNT(DISTINCT esub.sr_code) AS unique_students
+        FROM 
+            enrolled_subject esub
+        JOIN 
+            section s ON esub.section_id = s.section 
+        JOIN 
+            subject sj ON esub.subject_id = sj.subject
+        WHERE 
+            esub.faculty_id = '$userId'
+            AND esub.semester = '$subjectSemester'
+            AND esub.academic_year = '$subjectAcademicYear'
+            AND sj.subject = '$subjectPo'
+        GROUP BY 
+            s.section";
+
+
+            $countSQL_query = mysqli_query($con, $countSQL);
+
+            if ($countSQL_query) {
+                while ($countSQLRow = mysqli_fetch_assoc($countSQL_query)) {
+
+                    $fromForm = "SELECT COUNT(*) as count 
+                     FROM studentsform 
+                     WHERE toFacultyID = '$userId' 
+                     AND subject = '$subjectPo' 
+                     AND semester = '$subjectSemester' 
+                     AND academic_year = '$subjectAcademicYear'
+                     AND studentSection = '{$countSQLRow['section']}'";
+                    $fromForm_query = mysqli_query($con, $fromForm);
+
+                    while ($fromFormRow = mysqli_fetch_assoc(result: $fromForm_query)) {
+
+                        ?>
+                        <h5><?php echo $countSQLRow['section'] . ' - ' . $fromFormRow['count']; ?> /
+                            <?php echo $countSQLRow['unique_students']; ?>
+                        </h5>
+                        <?php
+                    }
+                }
+            } else {
+
+                echo "Error: " . mysqli_error($con);
+            }
+            ?>
+        </div>
+
+        <div class="d-flex justify-content-center align-items-center mb-2">
+            <?php
+            $subjectPo = $subject['subject'];
+            $subjectSemester = $subject['semester'];
+            $subjectAcademicYear = $subject['academic_year'];
+
+            $countAllSQL = "SELECT COUNT(DISTINCT es.sr_code) as unique_students
+FROM enrolled_subject es
+JOIN section s ON es.section_id = s.section
+JOIN subject sub ON es.subject_id = sub.subject
+WHERE es.faculty_id = '$userId'
+  AND es.semester = '$subjectSemester'
+  AND es.academic_year = '$subjectAcademicYear'
+  AND sub.subject = '$subjectPo'";
+
+            $countAllSQL_query = mysqli_query($con, $countAllSQL);
+
+            if ($countAllSQL_query) {
+                while ($countAllSQLRow = mysqli_fetch_assoc($countAllSQL_query)) {
+
+                    $fromForm = "SELECT COUNT(*) as count 
+                     FROM studentsform 
+                     WHERE toFacultyID = '$userId' 
+                     AND subject = '$subjectPo' 
+                     AND semester = '$subjectSemester' 
+                     AND academic_year = '$subjectAcademicYear'"; // Add section filter here
+                    $fromForm_query = mysqli_query($con, $fromForm);
+
+                    while ($fromFormRow = mysqli_fetch_assoc(result: $fromForm_query)) {
+                        // Output the section and counts for each section
+                        ?>
+                        <h5>The total number of students who evaluated the faculty: <span class="fw-bold">
+                                <?php echo $fromFormRow['count']; ?> /
+                                <?php echo $countAllSQLRow['unique_students']; ?>
+                            </span>
+                        </h5>
+                        <?php
+                    }
+                }
+            } else {
+                // Handle case if query fails
+                echo "Error: " . mysqli_error($con);
+            }
+            ?>
+        </div>
+
 
         <table class="table table-striped table-bordered text-center align-middle mb-5">
             <thead>

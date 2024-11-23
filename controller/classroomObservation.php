@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     echo json_encode(['status' => 'success', 'message' => 'Booking created successfully. Notification sent to admin.']);
 
-    
+
 } else {
     echo json_encode(['status' => 'error', 'message' => 'Invalid request.']);
 }
@@ -66,7 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $facultySelect = isset($_GET['facultySelect']) ? $_GET['facultySelect'] : '';
 $adminSelect = isset($_GET['adminSelect']) ? $_GET['adminSelect'] : '';
 
-$archivedSQL = "SELECT * FROM classroomobservation WHERE 1";
+$archivedSQL = "SELECT * FROM classroomobservation ORDER BY academic_year asc, semester asc, date asc";
+
 
 if (!empty($facultySelect)) {
     $archivedSQL .= " AND toFacultyID = '$facultySelect'";

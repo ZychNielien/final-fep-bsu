@@ -18,7 +18,7 @@ if (!isset($_SESSION["userid"]) || $_SESSION["user"] !== "faculty") {
     }
 }
 if (!isset($_SESSION["userid"])) {
-    header("location: ../loginModule\index.php");
+    header("location: ../../index.php");
     exit();
 }
 

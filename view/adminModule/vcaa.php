@@ -179,8 +179,12 @@ ob_end_flush();
 <section class="contentContainer">
     <nav>
         <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
-            <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home"
-                type="button" role="tab" aria-controls="nav-home" aria-selected="true">Peer to Peer
+            <button class="nav-link active" id="nav-facultyDevelopment-tab" data-bs-toggle="tab"
+                data-bs-target="#nav-facultyDevelopment" type="button" role="tab" aria-controls="nav-facultyDevelopment"
+                aria-selected="true">Faculty Development Plan
+                Report</button>
+            <button class="nav-link " id="nav-peerToPeer-tab" data-bs-toggle="tab" data-bs-target="#nav-peerToPeer"
+                type="button" role="tab" aria-controls="nav-peerToPeer" aria-selected="true">Peer to Peer
                 Evaluation Result</button>
             <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile"
                 type="button" role="tab" aria-controls="nav-profile" aria-selected="false">Faculty VCAA</button>
@@ -190,8 +194,51 @@ ob_end_flush();
     <!-- CONTENT OF A TAB LIST -->
     <div class="tab-content p-3 border overflow-auto" id="nav-tabContent">
 
+        <div class="tab-pane fade active show" id="nav-facultyDevelopment" role="tabpanel"
+            aria-labelledby="nav-facultyDevelopment-tab">
+            <div class="container d-flex flex-column-reverse">
+                <table class="table table-striped table-bordered text-center align-middle w-100">
+                    <thead>
+                        <tr class="bg-danger">
+                            <th>Faculty</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $facultyDevelopment = "SELECT * FROM `instructor` WHERE status = 1";
+                        $facultyDevelopment_query = mysqli_query($con, $facultyDevelopment);
+
+                        if (mysqli_num_rows($facultyDevelopment_query) > 0) {
+                            while ($facultyDevelopmentRow = mysqli_fetch_assoc($facultyDevelopment_query)) {
+                                ?>
+
+                                <tr>
+                                    <td><?php echo $facultyDevelopmentRow['first_name'] . ' ' . $facultyDevelopmentRow['last_name'] ?>
+                                    </td>
+                                    <td><button class="btn btn-success facultyDevelopment-btn" data-bs-toggle="modal"
+                                            data-bs-target="#facultyDevelopment"
+                                            data-id="<?php echo $facultyDevelopmentRow['faculty_Id']; ?>"
+                                            data-name="<?php echo $facultyDevelopmentRow['first_name'] . ' ' . $facultyDevelopmentRow['last_name'] ?>">Faculty
+                                            Development Report</button></td>
+                                </tr>
+
+                                <?php
+                            }
+
+                        } else {
+                            echo '<h3 class="text-center text-danger">No faculty found.</h3>';
+                        }
+
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
         <!-- TAB LIST FIRST TAB -->
-        <div class="tab-pane fade active show" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+        <div class="tab-pane fade" id="nav-peerToPeer" role="tabpanel" aria-labelledby="nav-peerToPeer-tab">
 
             <div class="container">
                 <table class="table table-striped table-bordered text-center align-middle w-100">
@@ -205,7 +252,7 @@ ob_end_flush();
                     <tbody>
                         <?php
 
-                        $sql = "SELECT * FROM `instructor`";
+                        $sql = "SELECT * FROM `instructor`  WHERE status = 1";
                         $sql_query = mysqli_query($con, $sql);
                         if ($sql_query) {
                             while ($instructor = mysqli_fetch_assoc($sql_query)) {
@@ -259,7 +306,7 @@ ob_end_flush();
                     <tbody>
                         <?php
 
-                        $sql = "SELECT * FROM `instructor`";
+                        $sql = "SELECT * FROM `instructor`  WHERE status = 1";
                         $sql_query = mysqli_query($con, $sql);
                         if ($sql_query) {
                             while ($vcaaRow = mysqli_fetch_assoc($sql_query)) {
@@ -307,6 +354,18 @@ ob_end_flush();
 
         </div>
 
+    </div>
+
+    <div class="modal fade" id="facultyDevelopment" tabindex="-1" aria-labelledby="facultyDevelopmentLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+
+            <div class="modal-body">
+
+
+            </div>
+
+        </div>
     </div>
 
     <!-- Peer to Peer Evaluation Results -->
@@ -505,7 +564,6 @@ ob_end_flush();
         </div>
     </div>
 
-
     <!-- Modal -->
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -602,6 +660,29 @@ ob_end_flush();
         $('#academic_year, #semester').change(function () {
             fetchFilteredResults();
         });
+
+        $(document).on('click', '.facultyDevelopment-btn', function () {
+            var facultyDevelopmentID = $(this).data('id');
+            var facultyDevelopmentName = $(this).data('name');
+            $('#facultyDevelopmentName').text(facultyDevelopmentName);
+
+            // Example AJAX request to fetch additional report details
+            $.ajax({
+                url: 'fetchReport.php', // Endpoint to fetch data
+                method: 'POST',
+                data: {
+                    id: facultyDevelopmentID,
+                    name: facultyDevelopmentName
+                },
+                success: function (response) {
+                    $('.modal-body').html(response); // Populate modal body with the fetched data
+                },
+                error: function () {
+                    $('.modal-body').html('<p class="text-danger">Failed to load report.</p>');
+                }
+            });
+        });
+
         $(document).on('click', '.viewPeertoPeer-btn', function () {
             var facultyID = $(this).data('id');
             var facultyName = $(this).data('name');

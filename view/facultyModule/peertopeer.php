@@ -60,7 +60,7 @@ include "components/navBar.php"
                 $sqlSAY = "SELECT DISTINCT  sf.semester, sf.academic_year 
                             FROM peertopeerform sf
                             JOIN instructor i ON sf.toFacultyID = i.faculty_Id
-                            WHERE i.faculty_Id = '$FacultyID'";
+                            WHERE i.faculty_Id = '$FacultyID' AND semester != '' AND semester IS NOT NULL";
 
                 $sqlSAY_query = mysqli_query($con, $sqlSAY);
 

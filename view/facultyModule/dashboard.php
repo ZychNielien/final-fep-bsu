@@ -129,6 +129,16 @@ $semesters = [];
 $subjectData = [];
 
 while ($row = mysqli_fetch_assoc($result)) {
+    // Skip rows with null or empty values
+    if (
+        empty($row['subject']) ||
+        empty($row['semester']) ||
+        empty($row['academic_year']) ||
+        !isset($row['combined_average'])
+    ) {
+        continue;
+    }
+
     $subject = $row['subject'];
     $semesterYear = $row['semester'] . ' ' . $row['academic_year'];
 
@@ -151,6 +161,7 @@ while ($row = mysqli_fetch_assoc($result)) {
         $subjectData[$subject][$index] = (float) $row['combined_average'];
     }
 }
+
 
 $subjectsJson = json_encode(array_keys($subjectData));
 $subjectDataJson = json_encode($subjectData);
