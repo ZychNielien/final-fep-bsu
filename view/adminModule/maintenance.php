@@ -237,9 +237,9 @@ include "components/navBar.php"
                             <?php echo $studentRow['course']; ?>
                           </td>
                           <td>
-                            <form action="../../controller/deleteApprove.php" method="POST">
+                            <form id="deleteForm" action="../../controller/deleteApprove.php" method="POST">
                               <input type="hidden" name="srcode" value="<?php echo $studentRow['srcode']; ?>">
-                              <button type="submit" class="btn btn-danger">Delete</button>
+                              <button type="button" class="btn btn-danger" id="deleteButton">Delete</button>
                             </form>
                           </td>
                         </tr>
@@ -272,10 +272,11 @@ include "components/navBar.php"
             <table class="table table-bordered table-striped text-center" id="studentApprovedTable">
               <thead class="bg-danger">
                 <tr class="text-white">
-                  <th>Year Level</th>
-                  <th>Student Name</th>
-                  <th>Information</th>
 
+                  <th>Student Name</th>
+                  <th>Year Level</th>
+                  <th>Information</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -292,12 +293,18 @@ include "components/navBar.php"
                   while ($studentRow = mysqli_fetch_assoc($studentSQL_query)) {
                     ?>
                     <tr>
-                      <td><?php echo $studentRow['year_level']; ?></td>
+
                       <td><?php echo $studentRow['firstname'] . ' ' . $studentRow['lastname']; ?></td>
+                      <td><?php echo $studentRow['year_level']; ?></td>
                       <td>
                         <!-- Button to trigger Modal -->
                         <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal"
                           data-bs-target="#studentInfoModal_<?php echo $studentRow['srcode']; ?>">Information</button>
+                      </td>
+                      <td>
+                        <!-- Delete Button -->
+                        <button type="button" class="btn btn-danger deleteButton"
+                          data-src="<?php echo $studentRow['srcode']; ?>">Delete</button>
                       </td>
                     </tr>
 
@@ -2702,3 +2709,90 @@ include "components/navBar.php"
       );
     }
   });//END OF ASSIGN SUBJECT JS</script>
+
+<script>
+  $(document).ready(function () {
+    $('.deleteButton').click(function () {
+      var srcode = $(this).data('src'); // Get the student code
+      console.log('Student code:', srcode);  // Debug line to check if data-src is fetched
+      const swalWithBootstrapButtons = Swal.mixin({
+        customClass: {
+          confirmButton: "btn btn-success ms-2",
+          cancelButton: "btn btn-danger me-2"
+        },
+        buttonsStyling: false
+      });
+      swalWithBootstrapButtons.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this action!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'No, cancel!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          $.ajax({
+            type: "POST",
+            url: "../../controller/deleteApprove.php",
+            data: {
+              srcode: srcode
+            },
+            dataType: "json",
+            success: function (response) {
+              if (response.success) {
+
+                swalWithBootstrapButtons.fire({
+                  title: "Deleted!",
+                  text: "The student record has been deleted.",
+                  icon: "success",
+                  toast: true,
+                  timer: 1000,
+                  timerProgressBar: true,
+                  showConfirmButton: false,
+                  position: "top-right",
+                  didClose: () => {
+                    window.location.reload();
+                  },
+                });
+              } else {
+
+                swalWithBootstrapButtons.fire({
+                  title: "Error!",
+                  text: "There was an error deleting the record.",
+                  icon: "error",
+                  toast: true,
+                  timer: 1000,
+                  timerProgressBar: true,
+                  showConfirmButton: false,
+                  position: "top-right",
+                  didClose: () => {
+                    window.location.reload();
+                  },
+                });
+              }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+
+              swalWithBootstrapButtons.fire({
+                title: "Error!",
+                text: "An error occurred while trying to delete the record.",
+                icon: "error",
+                toast: true,
+                timer: 1000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                position: "top-right",
+                didClose: () => {
+                  window.location.reload();
+                },
+              });
+            }
+          });
+        }
+      });
+    });
+  });
+
+</script>

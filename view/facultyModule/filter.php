@@ -152,16 +152,23 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
             $subjectPo = $subject['subject'];
             $subjectSemester = $subject['semester'];
             $subjectAcademicYear = $subject['academic_year'];
+            $countSQL = "SELECT 
+            s.section, 
+            COUNT(DISTINCT esub.sr_code) AS unique_students
+        FROM 
+            enrolled_subject esub
+        JOIN 
+            section s ON esub.section_id = s.section 
+        JOIN 
+            subject sj ON esub.subject_id = sj.subject
+        WHERE 
+            esub.faculty_id = '$userId'
+            AND esub.semester = '$subjectSemester'
+            AND esub.academic_year = '$subjectAcademicYear'
+            AND sj.subject = '$subjectPo'
+        GROUP BY 
+            s.section";
 
-            $countSQL = "SELECT s.section, COUNT(*) AS count 
-             FROM complete_subject cs 
-             JOIN section s ON cs.section_Id = s.id 
-             JOIN subject sj ON cs.subject_id = sj.subject_id 
-             WHERE cs.faculty_id = '$userId' 
-             AND cs.semester = '$subjectSemester' 
-             AND cs.academic_year = '$subjectAcademicYear'
-             AND sj.subject = '$subjectPo'
-             GROUP BY s.section";
 
             $countSQL_query = mysqli_query($con, $countSQL);
 
@@ -180,7 +187,8 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
                     while ($fromFormRow = mysqli_fetch_assoc(result: $fromForm_query)) {
 
                         ?>
-                        <h5><?php echo $countSQLRow['section'] . ' - ' . $fromFormRow['count']; ?> / <?php echo $countSQLRow['count']; ?>
+                        <h5><?php echo $countSQLRow['section'] . ' - ' . $fromFormRow['count']; ?> /
+                            <?php echo $countSQLRow['unique_students']; ?>
                         </h5>
                         <?php
                     }
@@ -198,14 +206,14 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
             $subjectSemester = $subject['semester'];
             $subjectAcademicYear = $subject['academic_year'];
 
-            $countAllSQL = "SELECT COUNT(*) AS count 
-             FROM complete_subject cs 
-             JOIN section s ON cs.section_Id = s.id 
-             JOIN subject sj ON cs.subject_id = sj.subject_id 
-             WHERE cs.faculty_id = '$userId' 
-             AND cs.semester = '$subjectSemester' 
-             AND cs.academic_year = '$subjectAcademicYear'
-             AND sj.subject = '$subjectPo'";
+            $countAllSQL = "SELECT COUNT(DISTINCT es.sr_code) as unique_students
+FROM enrolled_subject es
+JOIN section s ON es.section_id = s.section
+JOIN subject sub ON es.subject_id = sub.subject
+WHERE es.faculty_id = '$userId'
+  AND es.semester = '$subjectSemester'
+  AND es.academic_year = '$subjectAcademicYear'
+  AND sub.subject = '$subjectPo'";
 
             $countAllSQL_query = mysqli_query($con, $countAllSQL);
 
@@ -225,7 +233,7 @@ if (mysqli_num_rows($sqlSubject_query) > 0) {
                         ?>
                         <h5>The total number of students who evaluated the faculty: <span class="fw-bold">
                                 <?php echo $fromFormRow['count']; ?> /
-                                <?php echo $countAllSQLRow['count']; ?>
+                                <?php echo $countAllSQLRow['unique_students']; ?>
                             </span>
                         </h5>
                         <?php

@@ -125,6 +125,28 @@ $userRow = mysqli_fetch_assoc($usersql_query);
                     </ul>
                 </li>
                 <li>
+                    <a href="planReport.php" class="
+                    <?php
+                    if ($page == "planReport.php") {
+                        echo "linkName active";
+                    } else {
+                        echo "linkName";
+                    }
+                    ?>
+                    ">
+                        <i class="material-icons">assignment_turned_in</i>
+                        <span>Development Plan Report</span>
+
+                    </a>
+                    <ul class="subMenu blank">
+                        <li>
+                            <a href="#" class="linkName">
+                                Development Plan Report
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
                     <a href="evaluationResult.php" class="
                     <?php
                     if ($page == "evaluationResult.php") {
