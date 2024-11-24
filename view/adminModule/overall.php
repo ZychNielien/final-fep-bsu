@@ -85,8 +85,11 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
         <!-- Faculty Development -->
         <div class="tab-pane fade show active" id="nav-facultyDevelopment" role="tabpanel"
             aria-labelledby="nav-facultyDevelopment-tab">
+
             <h2 class="text-center m-3">Faculty Development Overall Ranking by Category</h2>
+
             <div class="container my-2">
+
                 <nav>
                     <div class="nav nav-tabs" id="nav-tab" role="tablist">
                         <button class="nav-link active" id="nav-teachingEffectiveness-tab" data-bs-toggle="tab"
@@ -110,38 +113,34 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             COMPETENCE</button>
                     </div>
                 </nav>
+
                 <div class="tab-content" id="nav-tabContent">
                     <div class="tab-pane fade show active" id="nav-teachingEffectiveness" role="tabpanel"
                         aria-labelledby="nav-teachingEffectiveness-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
 
                             <?php
-                            // Categories Query: Teaching Effectiveness
                             $sqlCategories_TE = "SELECT * FROM `studentscategories` WHERE categories = 'TEACHING EFFECTIVENESS'";
                             $sqlCategories_query_TE = mysqli_query($con, $sqlCategories_TE);
                             if (!$sqlCategories_query_TE) {
-                                echo "Query failed for Teaching Effectiveness: " . mysqli_error($con); // Debugging query issues
+                                echo "Query failed for Teaching Effectiveness: " . mysqli_error($con);
                                 exit;
                             }
 
-                            // Initialize an array to hold all instructor data for Teaching Effectiveness
                             $instructorsData_TE = [];
 
                             if (mysqli_num_rows($usersql_query) > 0) {
-                                // Loop through all instructors
+
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
                                     $FacultyID = $userRow['faculty_Id'];
-                                    $facultyName = $userRow['first_name'] . ' ' . $userRow['last_name'];  // Assuming 'first_name' and 'last_name' exist
-                            
-                                    // Reset the query pointer for categories
+                                    $facultyName = $userRow['first_name'] . ' ' . $userRow['last_name'];
+
                                     mysqli_data_seek($sqlCategories_query_TE, 0);
 
-                                    // Loop through categories to get ratings for 'Teaching Effectiveness'
                                     while ($categoriesRow = mysqli_fetch_assoc($sqlCategories_query_TE)) {
                                         $categories = $categoriesRow['categories'];
 
-                                        // Initialize variables for rating calculations
-                                        $totalRatings = [0, 0, 0, 0, 0]; // [1, 2, 3, 4, 5]
+                                        $totalRatings = [0, 0, 0, 0, 0];
                                         $ratingCount = 0;
                                         $averageRating = 0;
                                         $interpretation = 'None';
@@ -150,17 +149,15 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                                         $resultCriteria = mysqli_query($con, $sqlcriteria);
 
                                         if (mysqli_num_rows($resultCriteria) > 0) {
-                                            // Get ratings for the current faculty, semester, and academic year from studentsform
                                             $SQLFaculty = "
-                SELECT * FROM `studentsform` 
-                WHERE toFacultyID = '$FacultyID' 
-                AND semester = '$selectedSemester' 
-                AND academic_year = '$selectedAcademicYear'";
+                                                SELECT * FROM `studentsform` 
+                                                WHERE toFacultyID = '$FacultyID' 
+                                                AND semester = '$selectedSemester' 
+                                                AND academic_year = '$selectedAcademicYear'";
 
                                             $SQLFaculty_query = mysqli_query($con, $SQLFaculty);
 
                                             if (mysqli_num_rows($SQLFaculty_query) > 0) {
-                                                // Iterate through form results and process ratings
                                                 while ($ratingRow = mysqli_fetch_assoc($SQLFaculty_query)) {
                                                     while ($criteriaRow = mysqli_fetch_assoc($resultCriteria)) {
                                                         $columnName = sanitizeColumnName($criteriaRow['studentsCategories']);
@@ -176,7 +173,6 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                                                     mysqli_data_seek($resultCriteria, 0);
                                                 }
 
-                                                // Only calculate the average if we have ratings
                                                 if ($ratingCount > 0) {
                                                     for ($i = 0; $i < 5; $i++) {
                                                         $averageRating += ($i + 1) * $totalRatings[$i];
@@ -184,18 +180,15 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                                                     $averageRating /= $ratingCount;
                                                     $interpretation = getVerbalInterpretation($averageRating);
                                                 } else {
-                                                    // No ratings found for this instructor, APS is 0.00 and description is None
                                                     $averageRating = 0;
                                                     $interpretation = 'None';
                                                 }
                                             } else {
-                                                // If no records in `studentsform` for this instructor, set default values
                                                 $averageRating = 0;
                                                 $interpretation = 'None';
                                             }
                                         }
 
-                                        // Add the data for this instructor to the array for Teaching Effectiveness
                                         $instructorsData_TE[] = [
                                             'facultyName' => $facultyName,
                                             'category' => $categories,
@@ -208,9 +201,8 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                                 echo "<tr><td colspan='4' style='text-align: center; color: red;'>No instructors found for Teaching Effectiveness.</td></tr>";
                             }
 
-                            // Sort the array for Teaching Effectiveness by averageRating in descending order
                             usort($instructorsData_TE, function ($a, $b) {
-                                return $b['averageRating'] <=> $a['averageRating'];  // Descending order
+                                return $b['averageRating'] <=> $a['averageRating'];
                             });
                             ?>
 
@@ -225,47 +217,43 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                                 </thead>
                                 <tbody>
                                     <?php
-                                    // Add a counter for ranking
                                     $rank = 1;
                                     foreach ($instructorsData_TE as $data) {
                                         echo '<tr>';
-                                        echo '<td>' . $rank . '</td>';  // Display the current rank
+                                        echo '<td>' . $rank . '</td>';
                                         echo '<td>' . htmlspecialchars($data['facultyName']) . '</td>';
                                         echo '<td>' . number_format((float) $data['averageRating'], 2, '.', '') . '</td>';
                                         echo '<td>' . htmlspecialchars($data['interpretation']) . '</td>';
                                         echo '</tr>';
-                                        $rank++;  // Increment the rank
+                                        $rank++;
                                     }
                                     ?>
                                 </tbody>
                             </table>
                         </div>
                     </div>
+
                     <div class="tab-pane fade" id="nav-classManagement" role="tabpanel"
                         aria-labelledby="nav-classManagement-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
 
                             <?php
-                            // Categories Query: Classroom Management
                             $sqlCategories_CM = "SELECT * FROM `studentscategories` WHERE categories = 'CLASSROOM MANAGEMENT'";
                             $sqlCategories_query_CM = mysqli_query($con, $sqlCategories_CM);
 
                             if (!$sqlCategories_query_CM) {
-                                echo "Query failed for Classroom Management: " . mysqli_error($con); // Debugging query issues
+                                echo "Query failed for Classroom Management: " . mysqli_error($con);
                                 exit;
                             }
 
-                            // Initialize an array to hold all instructor data for Classroom Management
                             $instructorsData_CM = [];
 
-                            // Ensure $usersql_query is properly initialized and contains faculty data
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR` WHERE status = 1"); // Adjust table name as needed
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR` WHERE status = 1");
                             if (mysqli_num_rows($usersql_query) > 0) {
-                                // Loop through all instructors
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
                                     $FacultyID = $userRow['faculty_Id'];
-                                    $facultyName = $userRow['first_name'] . ' ' . $userRow['last_name'];  // Assuming 'first_name' and 'last_name' exist
-                            
+                                    $facultyName = $userRow['first_name'] . ' ' . $userRow['last_name'];
+
                                     // Reset categories query pointer
                                     mysqli_data_seek($sqlCategories_query_CM, 0);
 
@@ -286,11 +274,11 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                                         if (mysqli_num_rows($resultCriteria) > 0) {
                                             // Query ratings for the current faculty, semester, and academic year
                                             $SQLFaculty = "
-                    SELECT * FROM `studentsform`
-                    WHERE toFacultyID = '$FacultyID' 
-                    AND semester = '$selectedSemester' 
-                    AND academic_year = '$selectedAcademicYear'
-                ";
+                                                SELECT * FROM `studentsform`
+                                                WHERE toFacultyID = '$FacultyID' 
+                                                AND semester = '$selectedSemester' 
+                                                AND academic_year = '$selectedAcademicYear'
+                                            ";
 
                                             $SQLFaculty_query = mysqli_query($con, $SQLFaculty);
 
@@ -383,6 +371,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                         </div>
                     </div>
+
                     <div class="tab-pane fade" id="nav-studentEngagement" role="tabpanel"
                         aria-labelledby="nav-studentEngagement-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
@@ -524,6 +513,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                         </div>
                     </div>
+
                     <div class="tab-pane fade" id="nav-communication" role="tabpanel"
                         aria-labelledby="nav-communication-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
@@ -665,6 +655,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                         </div>
                     </div>
+
                     <div class="tab-pane fade" id="nav-emotionalCompetence" role="tabpanel"
                         aria-labelledby="nav-emotionalCompetence-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
@@ -806,15 +797,20 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                         </div>
                     </div>
+
                 </div>
+
             </div>
 
         </div>
 
         <!-- Peer to Peer  -->
         <div class="tab-pane fade" id="nav-peerToPeer" role="tabpanel" aria-labelledby="nav-peerToPeer-tab">
+
             <h2 class="text-center m-3">Peer to Peer Overall Ranking by Category</h2>
+
             <div class="container my-2">
+
                 <nav>
                     <div class="nav nav-tabs" id="nav-tab" role="tablist">
                         <button class="nav-link active" id="nav-professionalism-tab" data-bs-toggle="tab"
@@ -832,7 +828,9 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             aria-selected="false">TEAMWORK</button>
                     </div>
                 </nav>
+
                 <div class="tab-content" id="nav-tabContent">
+
                     <div class="tab-pane fade show active" id="nav-professionalism" role="tabpanel"
                         aria-labelledby="nav-professionalism-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
@@ -968,6 +966,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                         </div>
                     </div>
+
                     <div class="tab-pane fade" id="nav-interpersonalBehavior" role="tabpanel"
                         aria-labelledby="nav-interpersonalBehavior-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
@@ -1103,6 +1102,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                         </div>
                     </div>
+
                     <div class="tab-pane fade" id="nav-workHabits" role="tabpanel" aria-labelledby="nav-workHabits-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
                             <?php
@@ -1237,6 +1237,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                         </div>
                     </div>
+
                     <div class="tab-pane fade" id="nav-teamwork" role="tabpanel" aria-labelledby="nav-teamwork-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
                             <?php
@@ -1371,14 +1372,20 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                         </div>
                     </div>
+
                 </div>
+
             </div>
+
         </div>
 
         <!-- Classroom Observation -->
         <div class="tab-pane fade" id="nav-classObservation" role="tabpanel" aria-labelledby="nav-classObservation-tab">
+
             <h2 class="text-center m-3">Classroom Observation Overall Ranking by Category</h2>
+
             <div class="container my-2">
+
                 <nav>
                     <div class="nav nav-tabs" id="nav-tab" role="tablist">
                         <button class="nav-link active" id="nav-contentOrganization-tab" data-bs-toggle="tab"
@@ -1400,7 +1407,9 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             RELEVANCE</button>
                     </div>
                 </nav>
+
                 <div class="tab-content" id="nav-tabContent">
+
                     <div class="tab-pane fade show active" id="nav-contentOrganization" role="tabpanel"
                         aria-labelledby="nav-contentOrganization-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
@@ -1534,6 +1543,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                         </div>
                     </div>
+
                     <div class="tab-pane fade" id="nav-presentation" role="tabpanel"
                         aria-labelledby="nav-presentation-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
@@ -1667,6 +1677,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                         </div>
                     </div>
+
                     <div class="tab-pane fade" id="nav-isInteraction" role="tabpanel"
                         aria-labelledby="nav-isInteraction-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
@@ -1800,6 +1811,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                         </div>
                     </div>
+
                     <div class="tab-pane fade" id="nav-ime" role="tabpanel" aria-labelledby="nav-ime-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
                             <?php
@@ -1932,6 +1944,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                         </div>
                     </div>
+
                     <div class="tab-pane fade" id="nav-ckr" role="tabpanel" aria-labelledby="nav-ckr-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
                             <?php
@@ -2064,9 +2077,14 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                         </div>
                     </div>
+
                 </div>
+
             </div>
+
         </div>
+
+    </div>
 
 </section>
 
