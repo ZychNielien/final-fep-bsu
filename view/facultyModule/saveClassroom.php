@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $formattedEndTime = date('g:i A', strtotime("$endTime:00"));
 
         $url = "https://script.google.com/macros/s/AKfycbyxelEgiJLf-a-EuL6qdg5QZOaZC6L-EzYNQ4akLi2lImaPvVtavLbgNotMVijqv-g9wA/exec";
-        $recipient = 'cicsmalvarevaluation@gmail.com';
+        $recipient = 'corokarl6@gmail.com';
         $subject = 'New Classroom Observation Booking';
         $body = "
         Dear Admin,
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Please review the Classroom Observation for more information.
     
         Best regards,
-        Your Booking System
+        CICS Malvar Evaluation system
         ";
 
         $ch = curl_init($url);

@@ -248,7 +248,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                             $instructorsData_CM = [];
 
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR` WHERE status = 1");
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `instructor` WHERE status = 1");
                             if (mysqli_num_rows($usersql_query) > 0) {
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
                                     $FacultyID = $userRow['faculty_Id'];
@@ -389,7 +389,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             $instructorsData_SE = [];
 
                             // Ensure $usersql_query is properly initialized and contains faculty data
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR`  WHERE status = 1"); // Adjust table name as needed
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `instructor`  WHERE status = 1"); // Adjust table name as needed
                             if (mysqli_num_rows($usersql_query) > 0) {
                                 // Loop through all instructors
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
@@ -531,7 +531,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             $instructorsData_Comm = [];
 
                             // Ensure $usersql_query is properly initialized and contains faculty data
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR`  WHERE status = 1"); // Adjust table name as needed
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `instructor`  WHERE status = 1"); // Adjust table name as needed
                             if (mysqli_num_rows($usersql_query) > 0) {
                                 // Loop through all instructors
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
@@ -673,7 +673,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             $instructorsData_EC = [];
 
                             // Ensure $usersql_query is properly initialized and contains faculty data
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR`  WHERE status = 1"); // Adjust table name as needed
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `instructor`  WHERE status = 1"); // Adjust table name as needed
                             if (mysqli_num_rows($usersql_query) > 0) {
                                 // Loop through all instructors
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
@@ -848,7 +848,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             $instructorsData_Pro = [];
 
                             // Ensure $usersql_query is properly initialized and contains faculty data
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR`  WHERE status = 1"); // Adjust table name as needed
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `instructor`  WHERE status = 1"); // Adjust table name as needed
                             if (mysqli_num_rows($usersql_query) > 0) {
                                 // Loop through all instructors
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
@@ -984,7 +984,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             $instructorsData_IB = [];
 
                             // Ensure $usersql_query is properly initialized and contains faculty data
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR`  WHERE status = 1"); // Adjust table name as needed
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `instructor`  WHERE status = 1"); // Adjust table name as needed
                             if (mysqli_num_rows($usersql_query) > 0) {
                                 // Loop through all instructors
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
@@ -1119,7 +1119,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             $instructorsData_WH = [];
 
                             // Ensure $usersql_query is properly initialized and contains faculty data
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR`  WHERE status = 1"); // Adjust table name as needed
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `instructor`  WHERE status = 1"); // Adjust table name as needed
                             if (mysqli_num_rows($usersql_query) > 0) {
                                 // Loop through all instructors
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
@@ -1254,7 +1254,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             $instructorsData_Teamwork = [];
 
                             // Ensure $usersql_query is properly initialized and contains faculty data
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR`  WHERE status = 1"); // Adjust table name as needed
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `instructor`  WHERE status = 1"); // Adjust table name as needed
                             if (mysqli_num_rows($usersql_query) > 0) {
                                 // Loop through all instructors
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
@@ -1427,7 +1427,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             $instructorsData_Content = [];
 
                             // Ensure $usersql_query is properly initialized and contains faculty data
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR` WHERE userType = 'faculty' AND status = 1"); // Adjust table name as needed
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `instructor` WHERE userType = 'faculty' AND status = 1"); // Adjust table name as needed
                             if (mysqli_num_rows($usersql_query) > 0) {
                                 // Loop through all instructors
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
@@ -1561,7 +1561,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             $instructorsData_Presentation = [];
 
                             // Ensure $usersql_query is properly initialized and contains faculty data
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR` WHERE userType = 'faculty'  AND status = 1");
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `instructor` WHERE userType = 'faculty'  AND status = 1");
                             if (mysqli_num_rows($usersql_query) > 0) {
                                 // Loop through all instructors
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
@@ -1695,7 +1695,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             $instructorsData_Instructions = [];
 
                             // Ensure $usersql_query is properly initialized and contains faculty data
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR` WHERE userType = 'faculty'  AND status = 1");
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `instructor` WHERE userType = 'faculty'  AND status = 1");
                             if (mysqli_num_rows($usersql_query) > 0) {
                                 // Loop through all instructors
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
@@ -1828,7 +1828,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             $instructorsData_Materials = [];
 
                             // Ensure $usersql_query is properly initialized and contains faculty data
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR` WHERE userType = 'faculty'  AND status = 1");
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `instructor` WHERE userType = 'faculty'  AND status = 1");
                             if (mysqli_num_rows($usersql_query) > 0) {
                                 // Loop through all instructors
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
@@ -1961,7 +1961,7 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                             $instructorsData_Knowledge = [];
 
                             // Ensure $usersql_query is properly initialized and contains faculty data
-                            $usersql_query = mysqli_query($con, "SELECT * FROM `INSTRUCTOR` WHERE userType = 'faculty'  AND status = 1");
+                            $usersql_query = mysqli_query($con, "SELECT * FROM `instructor` WHERE userType = 'faculty'  AND status = 1");
                             if (mysqli_num_rows($usersql_query) > 0) {
                                 // Loop through all instructors
                                 while ($userRow = mysqli_fetch_assoc($usersql_query)) {
