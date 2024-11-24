@@ -66,6 +66,7 @@
 
 /* FIRST SIDEBAR LINK */
 .sidebar .navLinks {
+  overflow: none !important;
   display: flex;
   flex-direction: column;
   justify-content: center;
