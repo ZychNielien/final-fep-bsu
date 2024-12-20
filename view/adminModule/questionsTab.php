@@ -1,95 +1,7 @@
 <?php
 include "components/navBar.php";
 include "../../model/dbconnection.php";
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $action = $_POST['action'];
-
-    if ($action === 'assign') {
-
-        $semester = $_POST['semester'] ?? null;
-        $academicYear = $_POST['academicYear'] ?? null;
-
-        $sql = "SELECT faculty_Id FROM instructor WHERE status = 1";
-        $result = $con->query($sql);
-
-        if ($result->num_rows > 0) {
-            $userIds = [];
-            while ($row = $result->fetch_assoc()) {
-                $userIds[] = $row['faculty_Id'];
-            }
-
-            $totalUsers = count($userIds);
-
-            $totalRandomIds = $totalUsers * 5;
-            $randomAssignmentsCount = floor($totalRandomIds / $totalUsers);
-
-            $randomCount = array_fill_keys($userIds, 0);
-
-            shuffle($userIds);
-            $assignments = [];
-
-            foreach ($userIds as $userId) {
-
-                $filteredIds = array_filter($userIds, function ($id) use ($userId) {
-                    return $id != $userId;
-                });
-
-                shuffle($filteredIds);
-
-                $assignedRandomIds = [];
-                foreach ($filteredIds as $randomId) {
-                    if ($randomCount[$randomId] < $randomAssignmentsCount) {
-                        $assignedRandomIds[] = $randomId;
-                        $randomCount[$randomId]++;
-                    }
-
-                    if (count($assignedRandomIds) == 5) {
-                        break;
-                    }
-                }
-
-                foreach ($assignedRandomIds as $randomId) {
-                    $insertStmt = $con->prepare("INSERT INTO randomfaculty (faculty_Id, random_Id, semester, academic_year) VALUES (?, ?, ?, ?)");
-                    if ($insertStmt === false) {
-                        echo json_encode(["status" => "error", "message" => "Error in prepare: " . $con->error]);
-                        exit;
-                    }
-                    $insertStmt->bind_param("iiss", $userId, $randomId, $semester, $academicYear);
-                    if (!$insertStmt->execute()) {
-                        echo json_encode(["status" => "error", "message" => "Execute failed: " . $insertStmt->error]);
-                        exit;
-                    }
-                }
-
-                $assignments[$userId] = $assignedRandomIds;
-            }
-
-            $minAssignments = min($randomCount);
-            $maxAssignments = max($randomCount);
-
-            if ($maxAssignments - $minAssignments > 1) {
-                echo json_encode(["status" => "error", "message" => "Random faculty IDs have not been equally distributed."]);
-                exit;
-            }
-
-            echo json_encode(["status" => "success", "message" => "Random IDs have been assigned equally to all faculty members."]);
-        } else {
-            echo json_encode(["status" => "error", "message" => "No users found."]);
-        }
-    } elseif ($_POST['action'] === 'clear') {
-        $clearSql = "DELETE FROM randomfaculty";
-        if ($con->query($clearSql) === TRUE) {
-            echo json_encode(["status" => "success", "message" => "All random faculty IDs and the selected Academic Year and Semester have been cleared."]);
-        } else {
-            echo json_encode(["status" => "error", "message" => "Error: " . $con->error]);
-        }
-    }
-    exit;
-}
-
-
-
+include "togglePeer.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentaction'])) {
 
@@ -152,7 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentaction'])) {
     <link rel="stylesheet" href="../../bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="../../public/css/style.css">
     <link rel="stylesheet" href="../../public/css/sweetalert.min.css">
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
         .btn-toggle,
         .btn-studenttoggle {
@@ -189,6 +102,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentaction'])) {
         .nav-link.active {
             font-weight: bold;
             color: #d0112b;
+        }
+
+
+        .form-check-input {
+            width: 4rem;
+            height: 2.5rem;
+        }
+
+        .form-check-label {
+            font-size: 1.5rem;
+        }
+
+        .form-check {
+            font-size: 1.5rem;
+
         }
     </style>
 
@@ -584,35 +512,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentaction'])) {
         <div class="tab-pane fade" id="nav-faculty" role="tabpanel" aria-labelledby="nav-faculty-tab">
 
             <div class="d-flex justify-content-between mb-3 ">
-                <form action="">
-                    <div class="d-flex px-3">
-                        <div class="d-flex flex-column align-items-center px-2">
-                            <select id="semesterSelect" name="semesterSelect" class="form-control">
-                                <option value="">--Select Semester--</option>
-                                <option value="FIRST">1st Semester</option>
-                                <option value="SECOND">2nd Semester</option>
-                            </select>
-                        </div>
-                        <div class="d-flex flex-column align-items-center px-2">
-                            <select id="academicYearSelect" name="academicYearSelect" class="form-control">
-                                <option value="" disabled>Select Academic Year</option>
-                                <?php
-                                $currentYear = date("Y");
-                                $nextYear = $currentYear + 3;
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="customSwitch1Peer" style="width: 3.5em;">
+                </div>
 
-                                for ($year = $currentYear; $year <= $nextYear; $year++) {
-                                    echo "<option value='$year-" . ($year + 1) . "'>$year - " . ($year + 1) . "</option>";
-                                }
-                                ?>
-                            </select>
-                        </div>
-                        <div class="d-flex flex-column align-items-center px-2">
-                            <button type="button" class="btn btn-toggle" data-toggle="button" aria-pressed="false">
-                                <div class="handle"></div>
-                            </button>
-                        </div>
-                    </div>
-                </form>
+                <div>
+                    <h3 id="actionLabel" class="fw-bold text-center">Peer to Peer Evaluation is
+                        Close.</h3>
+                </div>
 
                 <div>
                     <button class="btn btn-success float-right mx-3" data-bs-toggle="modal"
@@ -621,10 +528,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentaction'])) {
                         data-bs-target="#facultyEvaluationModal">+ Criteria</button>
                 </div>
             </div>
-            <div>
-                <h3 id="actionLabel" class="fw-bold text-center">Assigning Random IDs</h3>
+
+            <div class="d-flex justify-content-center mb-3">
+                <div class="mx-2">
+                    <h3 class="fw-bold" id="semesterDisplay">Loading...</h3>
+                </div>
+                <div class="mx-2">
+                    <h3 class="fw-bold" id="academicYearDisplay">Loading...</h3>
+                </div>
             </div>
 
+
+            <div id="formFieldsPeer" class="d-none mt-3">
+                <!-- The form fields for selecting semester and academic year will be added here dynamically -->
+            </div>
 
             <div class="overflow-auto" style="max-height: 580px">
                 <?php
@@ -794,39 +711,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentaction'])) {
         <!-- STUDENTS EVALUATION PANEL -->
         <div class="tab-pane fade " id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
             <div class="d-flex justify-content-between mb-3 ">
-                <form id="evaluationForm">
-                    <div class="d-flex px-3">
-                        <div class="d-flex flex-column align-items-center px-2">
-                            <select id="termSelect" class="form-control">
-                                <option value="">--Select Semester--</option>
-                                <option value="FIRST">1st Semester</option>
-                                <option value="SECOND">2nd Semester</option>
-                            </select>
-                        </div>
-                        <div class="d-flex flex-column align-items-center px-2">
-                            <select id="yearSelect" class="form-control">
-                                <option value="">Select Academic Year</option>
-                                <?php
-                                $currentAcademicYear = date("Y");
-                                $futureYear = $currentAcademicYear + 3;
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="customSwitch1Student" style="width: 3.5em;">
+                </div>
 
-                                for ($year = $currentAcademicYear; $year <= $futureYear; $year++) {
-                                    echo "<option value='$year-" . ($year + 1) . "'>$year - " . ($year + 1) . "</option>";
-                                }
-                                ?>
-                            </select>
-                        </div>
-                        <div class="d-flex flex-column align-items-center px-2">
-                            <button type="button" class="btn btn-studenttoggle" data-toggle="button"
-                                aria-pressed="false">
-                                <div class="handle"></div>
-                            </button>
-                        </div>
-                    </div>
-                </form>
-
-
-
+                <div>
+                    <h3 id="actionLabelStudent" class="fw-bold text-center">Student Evaluation is
+                        Close.</h3>
+                </div>
 
                 <div class="d-flex justify-content-end mb-3">
                     <button class="btn btn-success float-right mx-3" data-bs-toggle="modal"
@@ -836,9 +728,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentaction'])) {
                 </div>
             </div>
 
-            <div>
-                <h3 id="actionLabelStudent" class="fw-bold text-center">Assigning Random IDs</h3>
+            <div class="d-flex justify-content-center mb-3">
+                <div class="mx-2">
+                    <h3 class="fw-bold" id="semesterDisplayStudent">Loading...</h3>
+                </div>
+                <div class="mx-2">
+                    <h3 class="fw-bold" id="academicYearDisplayStudent">Loading...</h3>
+                </div>
             </div>
+            <div id="formFieldsStudent" class="d-none mt-3">
+                <!-- The form fields for selecting semester and academic year will be added here dynamically -->
+            </div>
+
             <!-- Student Evaluation Panel -->
             <div class="overflow-auto" style="max-height: 580px">
                 <?php
@@ -1576,7 +1477,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['studentaction'])) {
     </div>
 
 </section>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.all.min.js"></script>
 
 <!-- SWEETALERT SESSION FOR SUCCESS -->
 <?php
@@ -1602,10 +1504,53 @@ if (isset($_SESSION['success'])) {
 ?>
 
 
+<script>
+
+    function fetchSemesterAndYear() {
+        fetch('get_semester_academic_year.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error(data.error);
+                } else {
+
+                    document.getElementById('semesterDisplay').textContent = `Semester : ${data.semester}`;
+                    document.getElementById('academicYearDisplay').textContent = `Academic Year : ${data.academic_year}`;
+                }
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    }
+
+
+    fetchSemesterAndYear();
+
+    setInterval(fetchSemesterAndYear, 1000);
+
+
+    function fetchSemesterAndYearStudent() {
+        fetch('get_semester_academic_yearStudent.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error(data.error);
+                } else {
+
+                    document.getElementById('semesterDisplayStudent').textContent = `Semester : ${data.semester}`;
+                    document.getElementById('academicYearDisplayStudent').textContent = `Academic Year : ${data.academic_year}`;
+                }
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    }
+
+
+    fetchSemesterAndYearStudent();
+
+    setInterval(fetchSemesterAndYearStudent, 1000); 
+</script>
 
 <script>
     $(document).ready(function () {
-
+        fetchSemesterAndYear();
         // CLASSROOM EVALUATION BUTTONS
 
         // CLASSROOM EVALUATION FOR EDITING DATA
@@ -2006,298 +1951,329 @@ if (isset($_SESSION['success'])) {
                 }
             });
         });
+    });
+</script>
 
+<script>
+    const toggleSwitchStudent = document.getElementById('customSwitch1Student');
+    const labelStudent = document.getElementById('actionLabelStudent');
+    const formFieldsStudent = document.getElementById('formFieldsStudent');
 
+    function checkToggleStatusStudent() {
+        fetch('../../update_toggle_statusStudent.php', {
+            method: 'GET'
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response from server:', data);
 
-
-
-
-        // LOCALSTORAGE FOR SEMESTER AND ACADEMIC YEAR
-        const storedSemester = localStorage.getItem('semester');
-        const storedAcademicYear = localStorage.getItem('academicYear');
-
-        if (storedSemester) {
-            $('#semesterSelect').val(storedSemester);
-        }
-
-        if (storedAcademicYear) {
-            $('#academicYearSelect').val(storedAcademicYear);
-        }
-
-        $('#semesterSelect').on('change', function () {
-            localStorage.setItem('semester', $(this).val());
-        });
-
-        $('#academicYearSelect').on('change', function () {
-            localStorage.setItem('academicYear', $(this).val());
-        });
-
-        let currentAction = 'clear';
-
-        if (localStorage.getItem('action') === 'assign') {
-            $('#semesterSelect').val(localStorage.getItem('semester'));
-            $('#academicYearSelect').val(localStorage.getItem('academicYear'));
-            currentAction = 'assign';
-        } else {
-            $('#semesterSelect').val('');
-            $('#academicYearSelect').val('');
-        }
-
-        $('.btn-toggle').toggleClass('assigned', currentAction === 'assign');
-        updateActionLabel(currentAction);
-
-        $('.btn-toggle').on('click', function () {
-            currentAction = (currentAction === 'assign') ? 'clear' : 'assign';
-
-            $('.btn-toggle').toggleClass('assigned', currentAction === 'assign');
-            updateActionLabel(currentAction);
-
-            if (currentAction === 'assign') {
-                const semester = $('#semesterSelect').val();
-                const academicYear = $('#academicYearSelect').val();
-
-                if (!semester || !academicYear) {
-                    Swal.fire({
-                        title: 'Missing Selections',
-                        text: 'Please select both a semester and an academic year before proceeding.',
-                        icon: 'warning',
-                        confirmButtonText: 'Okay'
-                    });
-                    currentAction = 'clear';
-                    $('.btn-toggle').removeClass('assigned');
-                    updateActionLabel(currentAction);
-                    return;
-                }
-
-                localStorage.setItem('semester', semester);
-                localStorage.setItem('academicYear', academicYear);
-                localStorage.setItem('action', 'assign');
-
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: `You have selected ${semester} Semester, Academic Year: ${academicYear}. Proceed with assigning random IDs?`,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, assign it!',
-                    cancelButtonText: 'No, cancel!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        executeAction(currentAction, semester, academicYear);
+                if (data.status === 'success') {
+                    if (data.toggleStatus === 1) {
+                        console.log('Toggle should be ON');
+                        toggleSwitchStudent.checked = true;
+                        labelStudent.textContent = 'Student Evaluation is Open.';
+                        labelStudent.style.color = 'green';
+                        formFieldsStudent.classList.remove('d-none');
                     } else {
-                        currentAction = 'clear';
-                        $('.btn-toggle').removeClass('assigned');
-                        updateActionLabel(currentAction);
+                        console.log('Toggle should be OFF');
+                        toggleSwitchStudent.checked = false;
+                        labelStudent.textContent = 'Student Evaluation is Close.';
+                        labelStudent.style.color = 'red';
+                        formFieldsStudent.classList.add('d-none');
                     }
-                });
-            } else {
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: 'This will clear all selections. Do you want to proceed?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, clear it!',
-                    cancelButtonText: 'No, cancel!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $('#semesterSelect').val('');
-                        $('#academicYearSelect').val('');
-                        currentAction = 'clear';
-                        localStorage.removeItem('semester');
-                        localStorage.removeItem('academicYear');
-                        localStorage.removeItem('action');
-                        executeAction(currentAction);
-                    } else {
-                        currentAction = 'assign';
-                        $('.btn-toggle').addClass('assigned');
-                        updateActionLabel(currentAction);
-                    }
-                });
-            }
-        });
-
-        function executeAction(action, semester, academicYear) {
-            const data = { action: action };
-            if (semester && academicYear) {
-                data.semester = semester;
-                data.academicYear = academicYear;
-            }
-
-            $.post("", data, function (response) {
-                var res = JSON.parse(response);
-                Swal.fire({
-                    title: 'Success',
-                    text: res.message,
-                    icon: 'success',
-                    confirmButtonText: 'Okay'
-                });
-
-                if (action === 'assign') {
-                    Swal.fire({
-                        title: 'Random IDs Assigned',
-                        text: 'Tatlong random IDs ay matagumpay na na-assign.',
-                        icon: 'success',
-                        confirmButtonText: 'Okay'
-                    });
                 }
+            })
+            .catch(error => console.log('Error fetching toggle status:', error));
+    }
 
-                loadUsers();
-            }).fail(function (xhr) {
-                let errorMessage = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "Naganap ang isang error sa server.";
-                Swal.fire({
-                    title: 'Error',
-                    text: errorMessage,
-                    icon: 'error',
-                    confirmButtonText: 'Okay'
-                });
-            });
-        }
+    window.onload = function () {
+        checkToggleStatusStudent();
+    };
 
-        function updateActionLabel(action) {
-            const label = action === 'assign' ? 'The peer-to-peer evaluation is OPEN.' : 'The peer-to-peer evaluation is CLOSED.';
-            $('#actionLabel').text(label);
-            if (action === 'assign') {
-                $('#actionLabel').css('color', 'green');
-            } else {
-                $('#actionLabel').css('color', 'red');
-            }
-        }
-
-        function updateActionLabel(action) {
-            const label = action === 'assign' ? 'The peer-to-peer evaluation is OPEN.' : 'The peer-to-peer evaluation is CLOSED.';
-            $('#actionLabel').text(label);
-            if (action === 'assign') {
-                $('#actionLabel').css('color', 'green');
-            } else {
-                $('#actionLabel').css('color', 'red');
-            }
-        }
-
-        const termDropdown = $('#termSelect');
-        const yearDropdown = $('#yearSelect');
-        let currentStatus = 'clear';
-
-        const savedTerm = localStorage.getItem('term');
-        const savedYear = localStorage.getItem('academicYear');
-        if (savedTerm) termDropdown.val(savedTerm);
-        if (savedYear) yearDropdown.val(savedYear);
-
-        if (localStorage.getItem('status') === 'assign') {
-            termDropdown.val(savedTerm);
-            yearDropdown.val(savedYear);
-            currentStatus = 'assign';
-        }
-
-        updateToggleButtonState();
-        updateStatusLabel(currentStatus);
-
-        termDropdown.on('change', () => localStorage.setItem('term', termDropdown.val()));
-        yearDropdown.on('change', () => localStorage.setItem('academicYear', yearDropdown.val()));
-
-        $('.btn-studenttoggle').on('click', handleToggleClick);
-
-        function handleToggleClick() {
-            currentStatus = (currentStatus === 'assign') ? 'clear' : 'assign';
-            updateToggleButtonState();
-            updateStatusLabel(currentStatus);
-
-            if (currentStatus === 'assign') {
-                handleAssignProcess();
-            } else {
-                handleClearProcess();
-            }
-        }
-
-        function handleAssignProcess() {
-            const selectedTerm = termDropdown.val();
-            const selectedYear = yearDropdown.val();
-
-            if (!selectedTerm || !selectedYear) {
-                displayAlert('Missing Selections', 'Please select both a term and an academic year before proceeding.', 'warning');
-                currentStatus = 'clear';
-                updateToggleButtonState();
-                return;
-            }
-
-            localStorage.setItem('term', selectedTerm);
-            localStorage.setItem('academicYear', selectedYear);
-            localStorage.setItem('status', 'assign');
+    toggleSwitchStudent.addEventListener('change', function () {
+        if (toggleSwitchStudent.checked) {
+            labelStudent.textContent = 'Student Evaluation is Open.';
+            labelStudent.style.color = 'green';
+            formFieldsStudent.classList.remove('d-none');
 
             Swal.fire({
-                title: 'Are you sure?',
-                text: `You have selected ${selectedTerm} Term, Academic Year: ${selectedYear}. Proceed with assigning?`,
-                icon: 'question',
+                title: 'Please select Semester and Academic Year',
+                html: `
+                <div class="mb-3">
+                    <label for="semester" class="form-label">Semester</label>
+                    <select class="form-select" id="swalSemester" required>
+                        <option value="">Select Semester</option>
+                        <option value="FIRST">1st Semester</option>
+                        <option value="SECOND">2nd Semester</option>
+                        <option value="SUMMER">Summer</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="academicYear" class="form-label">Academic Year</label>
+                    <select class="form-select" id="swalAcademicYear" required>
+                        <option value="">Select Academic Year</option>
+                            <?php
+                            $currentYear = date("Y");
+                            $nextYear = $currentYear + 3;
+
+                            for ($year = $currentYear; $year <= $nextYear; $year++) {
+                                $value = "$year-" . ($year + 1);
+                                echo "<option value='$value' $selected>$year - " . ($year + 1) . "</option>";
+                            } ?>
+                        </option>
+                    </select>
+                </div>
+            `,
                 showCancelButton: true,
-                confirmButtonText: 'Yes, assign it!',
-                cancelButtonText: 'No, cancel!'
+                confirmButtonText: 'Save',
+                preConfirm: () => {
+                    const semester = document.getElementById('swalSemester').value;
+                    const academicYear = document.getElementById('swalAcademicYear').value;
+                    if (!semester || !academicYear) {
+                        Swal.showValidationMessage('Please fill in all fields');
+                        return false;
+                    }
+                    return { semester, academicYear };
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    executeProcess(currentStatus, selectedTerm, selectedYear);
+                    const { semester, academicYear } = result.value;
+
+                    fetch('../../update_toggle_statusStudent.php', {
+                        method: 'POST',
+                        body: new URLSearchParams({
+                            action: 'assign',
+                            semester: semester,
+                            academicYear: academicYear
+                        }),
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            Swal.fire('Saved!', data.message, 'success');
+                        })
+                        .catch(error => {
+                            Swal.fire('Error!', 'Something went wrong.', 'error');
+                        });
                 } else {
-                    resetStatusState();
+                    toggleSwitchStudent.checked = false;
+                    labelStudent.textContent = 'Student Evaluation is Close.';
+                    labelStudent.style.color = 'red';
+                    formFieldsStudent.classList.add('d-none');
                 }
             });
-        }
+        } else {
+            labelStudent.textContent = 'Student Evaluation is Close.';
+            labelStudent.style.color = 'red';
+            formFieldsStudent.classList.add('d-none');
 
-        function handleClearProcess() {
+            // Display confirmation dialog before clearing
             Swal.fire({
-                title: 'Are you sure?',
-                text: 'This will clear all selections. Do you want to proceed?',
+                title: 'Closing Evaluation',
+                text: "Are you sure you want to close the evaluation for Student?",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: 'Yes, clear it!',
-                cancelButtonText: 'No, cancel!'
+                confirmButtonText: 'Yes, close it!',
+                cancelButtonText: 'No, keep it'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    termDropdown.val('');
-                    yearDropdown.val('');
-                    currentStatus = 'clear';
-                    localStorage.removeItem('term');
-                    localStorage.removeItem('academicYear');
-                    localStorage.removeItem('status');
-                    executeProcess(currentStatus);
+                    // Proceed with the clear action
+                    fetch('../../update_toggle_statusStudent.php', {
+                        method: 'POST',
+                        body: new URLSearchParams({
+                            action: 'clear'
+                        }),
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data); // Log to check the response
+                            Swal.fire({
+                                title: 'Closed!',
+                                text: 'The Student evaluation has been closed.',
+                                icon: 'info',
+                                confirmButtonText: 'OK'
+                            });
+                        })
+                        .catch(error => {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Something went wrong while closing evaluation.',
+                                icon: 'error',
+                                confirmButtonText: 'Try Again'
+                            });
+                        });
                 } else {
-                    currentStatus = 'assign';
-                    updateToggleButtonState();
+                    // User chose not to clear, do nothing
+                    toggleSwitchStudent.checked = true; // Keep the toggle switch in the "on" position
+                    labelStudent.textContent = 'Student Evaluation is Open.';
+                    labelStudent.style.color = 'green';
+                    formFieldsStudent.classList.remove('d-none');
                 }
             });
         }
+    });
 
-        function executeProcess(status, term, year) {
-            const requestData = { studentaction: status, semester: term, academicYear: year };
+</script>
 
-            $.post("", requestData, function (response) {
-                const result = JSON.parse(response);
-                displayAlert('Success', result.message, 'success');
 
-                if (status === 'assign') {
-                    displayAlert('Random IDs Assigned', 'Random IDs have been successfully assigned.', 'success');
+<script>
+    const toggleSwitchPeer = document.getElementById('customSwitch1Peer');
+    const labelPeer = document.getElementById('actionLabel');
+    const formFieldsPeer = document.getElementById('formFieldsPeer');
+
+    document.addEventListener("DOMContentLoaded", function () {
+        // Fetch the data from the backend PHP script
+        fetch('update_toggle_status.php')
+            .then(response => response.json())
+            .then(data => {
+                const switchElement = document.getElementById('customSwitch1Peer');
+                console.log(data.switch_state);
+                // Set the switch based on the response from the backend
+                if (data.switch_state == 1) {
+                    switchElement.checked = true;  // Turn on the switch if the state is 1
+                    labelPeer.textContent = 'Peer to Peer Evaluation is Open.';
+                    labelPeer.style.color = 'green';
+                } else {
+                    switchElement.checked = false;  // Turn off the switch if the state is 0
+                    labelPeer.textContent = 'Peer to Peer Evaluation is Closed.';
+                    labelPeer.style.color = 'red';
                 }
+            })
+            .catch(error => console.error('Error fetching the data:', error));
+    });
 
-            }).fail(function (xhr) {
-                const errorMessage = xhr.responseJSON?.message || "An error occurred on the server.";
-                displayAlert('Error', errorMessage, 'error');
+    toggleSwitchPeer.addEventListener('change', function () {
+        if (toggleSwitchPeer.checked) {
+            labelPeer.textContent = 'Peer to Peer Evaluation is Open.';
+            labelPeer.style.color = 'green';
+            formFieldsPeer.classList.remove('d-none');
+
+            Swal.fire({
+                title: 'Please select Semester and Academic Year',
+                html: `
+                <div class="mb-3">
+                    <label for="semester" class="form-label">Semester</label>
+                    <select class="form-select" id="swalSemester" required>
+                        <option value="">Select Semester</option>
+                        <option value="FIRST">1st Semester</option>
+                        <option value="SECOND">2nd Semester</option>
+                        <option value="SUMMER">Summer</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="academicYear" class="form-label">Academic Year</label>
+                    <select class="form-select" id="swalAcademicYear" required>
+                        <option value="">Select Academic Year</option>
+                            <?php
+                            $currentYear = date("Y");
+                            $nextYear = $currentYear + 3;
+
+                            for ($year = $currentYear; $year <= $nextYear; $year++) {
+                                $value = "$year-" . ($year + 1);
+                                $selected = (isset($academic_year) && $academic_year === $value) ? 'selected' : '';
+                                echo "<option value='$value' $selected>$year - " . ($year + 1) . "</option>";
+                            } ?>
+                        </option>
+                    </select>
+                </div>
+            `,
+                showCancelButton: true,
+                confirmButtonText: 'Save',
+                preConfirm: () => {
+                    const semester = document.getElementById('swalSemester').value;
+                    const academicYear = document.getElementById('swalAcademicYear').value;
+                    if (!semester || !academicYear) {
+                        Swal.showValidationMessage('Please fill in all fields');
+                        return false;
+                    }
+                    return { semester, academicYear };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const { semester, academicYear } = result.value;
+
+                    fetch('update_toggle_status.php', {
+                        method: 'POST',
+                        body: new URLSearchParams({
+                            action: 'assign',
+                            semester: semester,
+                            academicYear: academicYear
+                        }),
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            Swal.fire('Saved!', data.message, 'success');
+                        })
+                        .catch(error => {
+                            Swal.fire('Saved!', 'The Peer to Peer evaluation has been closed.', 'success');
+                        });
+                } else {
+                    toggleSwitchPeer.checked = false;
+                    labelPeer.textContent = 'Peer to Peer Evaluation is Close.';
+                    labelPeer.style.color = 'red';
+                    formFieldsPeer.classList.add('d-none');
+                }
+            });
+        } else {
+            labelPeer.textContent = 'Peer to Peer Evaluation is Close.';
+            labelPeer.style.color = 'red';
+            formFieldsPeer.classList.add('d-none');
+
+            // Display confirmation dialog before clearing
+            Swal.fire({
+                title: 'Closing Evaluation',
+                text: "Are you sure you want to close the evaluation for Peer to Peer?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, close it!',
+                cancelButtonText: 'No, keep it'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Proceed with the clear action
+                    fetch('update_toggle_status.php', {
+                        method: 'POST',
+                        body: new URLSearchParams({
+                            action: 'clear'
+                        }),
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data); // Log to check the response
+                            Swal.fire({
+                                title: 'Closed!',
+                                text: 'The Peer to Peer evaluation has been closed.',
+                                icon: 'info',
+                                confirmButtonText: 'OK'
+                            });
+                        })
+                        .catch(error => {
+                            Swal.fire({
+                                title: 'Closed!',
+                                text: 'The Peer to Peer evaluation has been closed.',
+                                icon: 'success',
+                                confirmButtonText: 'Try Again'
+                            });
+                        });
+                } else {
+                    // User chose not to clear, do nothing
+                    toggleSwitchPeer.checked = true; // Keep the toggle switch in the "on" position
+                    labelPeer.textContent = 'Peer to Peer Evaluation is Open.';
+                    labelPeer.style.color = 'green';
+                    formFieldsPeer.classList.remove('d-none');
+                }
             });
         }
-
-        function displayAlert(title, message, icon) {
-            Swal.fire({ title, text: message, icon, confirmButtonText: 'Okay' });
-        }
-
-        function updateToggleButtonState() {
-            $('.btn-studenttoggle').toggleClass('assigned', currentStatus === 'assign');
-        }
-
-        function updateStatusLabel(status) {
-            const labelText = status === 'assign' ? 'The Faculty evaluation is OPEN.' : 'The Faculty evaluation is CLOSED.';
-            $('#actionLabelStudent').text(labelText).css('color', status === 'assign' ? 'green' : 'red');
-        }
-
-        function resetStatusState() {
-            currentStatus = 'clear';
-            $('.btn-studenttoggle').removeClass('assigned');
-            updateStatusLabel(currentStatus);
-        }
-
     });
 
 </script>

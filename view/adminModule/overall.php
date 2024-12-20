@@ -5,6 +5,8 @@ include "../../model/dbconnection.php";
 include "components/navBar.php";
 
 
+
+
 // Get the list of all instructors
 $usersql = "SELECT * FROM `instructor`  WHERE status = 1";
 $usersql_query = mysqli_query($con, $usersql);
@@ -2578,6 +2580,7 @@ $FDPRow = mysqli_fetch_assoc($FDP_query);
 
         </div>
 
+
     </div>
 
 </section>
@@ -2653,6 +2656,16 @@ $FDPRow = mysqli_fetch_assoc($FDP_query);
             </div>
 
                 ${printContent.innerHTML}
+                      <?php
+                      $userId = $_SESSION["userid"];
+
+                      $userId = mysqli_real_escape_string($con, $userId);
+
+                      $usersql = "SELECT * FROM `instructor` WHERE faculty_Id = '$userId'";
+                      $usersql_query = mysqli_query($con, $usersql);
+                      $userRow = mysqli_fetch_assoc($usersql_query);
+                      ?>
+        <h3>Printed By : <?php echo $userRow['first_name'] . ' ' . $userRow['last_name'] ?></h3>
                           
             </body>
         </html>
