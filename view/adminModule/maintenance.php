@@ -467,12 +467,74 @@ include "components/navBar.php"
       <div class="container my-5">
         <h3 class="mb-4 text-center">Faculty Approval & Rejection</h3>
 
-        <div class="d-flex justify-content-end my-2">
+        <div class="d-flex justify-content-evenly my-2">
+          <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#facultyRegistration">
+            Add Faculty
+          </button>
           <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#rejectedFaculty">
             Rejected Faculty
           </button>
         </div>
 
+        <div class="modal fade" id="facultyRegistration" tabindex="-1" aria-labelledby="facultyRegistrationLabel"
+          aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header bg-danger">
+                <h5 class="modal-title text-white" id="facultyRegistrationLabel">Faculty Registration Process</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <form id="myForm" method="POST" action="../../controller/facultyQuery.php" enctype="multipart/form-data">
+                <div class="modal-body">
+                  <!-- IMAGE DIV -->
+                  <div class="d-flex justify-content-center mb-3">
+                    <img id="imagePreview" alt="Image Preview" src="https://via.placeholder.com/300"
+                      style="max-height: 130px; cursor: pointer;" onclick="selectImage();" />
+                  </div>
+                  <div class="d-flex justify-content-evenly mt-4">
+                    <!-- FIRST NAME DIV -->
+                    <div class="form-group">
+                      <span for="firstName">First Name</span>
+                      <input type="text" class="form-control my-1" id="firstName" placeholder="Enter your first name"
+                        name="first_name" required>
+                    </div>
+                    <!-- LAST NAME DIV -->
+                    <div class="form-group">
+                      <span for="lastName">Last Name</span>
+                      <input type="text" class="form-control my-1" id="lastName" placeholder="Enter your last name"
+                        name="last_name" required>
+                    </div>
+                  </div>
+                  <!-- GSUITE DIV, NAKAHIDE PINAGCONCAT KO YUNG FIRST NAME AT LAST NAME -->
+                  <div class="form-group mx-3" style="display:none;">
+                    <span for="gsuite">Gsuite</span>
+                    <input type="text" class="form-control my-1" id="gsuite" placeholder="Enter your Gsuite"
+                      name="gsuite">
+                  </div>
+                  <!-- PASSWORD DIV, NAKAHIDE ANG GINAWA KONG DEFAULT PASSWORD IS LAST NAME ALL CAPS -->
+                  <div class="form-group mx-3" style="display:none;">
+                    <span for="password">Password</span>
+                    <input type="password" class="form-control my-1" id="password" placeholder="Enter your password"
+                      name="password">
+                  </div>
+                  <!-- USER TYPE DIV, NAKAHIDE MATIK LAHAT FACULTY ANG USER TYPE TATLO LANG ANG ADMIN -->
+                  <div class="form-group mx-3" style="display:none;">
+                    <span for="password">type</span>
+                    <input type="password" class="form-control my-1" id="password" placeholder="Enter your password"
+                      name="type">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="submit" id="addFaculty" name="addFacultyAdmin" class="btn btn-primary">Submit</button>
+                </div>
+                <!-- INPUT NI IMAGE -->
+                <input type="file" id="imageInput" name="image" accept="image/*" style="display: none;"
+                  onchange="previewImage();">
+              </form>
+            </div>
+          </div>
+        </div>
 
         <!-- Modal -->
         <div class="modal fade" id="rejectedFaculty" tabindex="-1" aria-labelledby="rejectedFacultyLabel"
@@ -2173,6 +2235,56 @@ include "components/navBar.php"
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+
+  // VALIDATION KAPAG HINDI NAKAPAGINPUT NG IMAGE SI ADMIN
+  $('#myForm').on('submit', function (event) {
+    var imageInput = $('#imageInput');
+
+    if (imageInput[0].files.length === 0) {
+      event.preventDefault();
+      Swal.fire({
+        icon: 'warning',
+        title: 'Oops...',
+        text: 'Please upload a picture before submitting.',
+        confirmButtonText: 'Okay'
+      });
+      imageInput.focus();
+    }
+  });
+
+  $('#new_image').on('change', function () {
+    var input = this;
+
+    if (input.files && input.files[0]) {
+      var reader = new FileReader();
+
+      reader.onload = function (e) {
+        $('#facultyImage').attr('src', e.target.result).show();
+      }
+      reader.readAsDataURL(input.files[0]);
+    }
+  });
+
+
+
+  // HIDDEN INPUT NI IMAGE
+  function selectImage() {
+    $('#imageInput').click();
+  }
+
+  // IMAGE PREVIEW PARA KAPAG PUMILI NG IMAGE MAGDISPLAY AGAD
+  function previewImage() {
+    const file = document.getElementById('imageInput').files[0];
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      document.getElementById('imagePreview').src = e.target.result;
+    }
+
+    if (file) {
+      reader.readAsDataURL(file);
+    }
+  }
 
   // Display SweetAlert if session status is set
   <?php if (isset($_SESSION['status'])): ?>

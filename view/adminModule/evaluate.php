@@ -62,26 +62,40 @@ $facultyID = $userRow["faculty_Id"];
                 $selectDistinct = "SELECT semester , academic_year FROM `randomfaculty`";
                 $selectDistinct_query = mysqli_query($con, $selectDistinct);
                 $selectDistinctRow = mysqli_fetch_assoc($selectDistinct_query);
-                $distinctSemester = $selectDistinctRow['semester'];
-                $distinctAcademicYear = $selectDistinctRow['academic_year'];
+                if ($selectDistinctRow) {
+                    $distinctSemester = $selectDistinctRow['semester'];
+                    $distinctAcademicYear = $selectDistinctRow['academic_year'];
+                } else {
+                    // Handle the case where there are no rows returned
+                    echo "No distinct semester or academic year found.";
+                    exit; // Or handle the flow accordingly
+                }
 
                 if (mysqli_num_rows($countWhoSQL_query) > 0) {
                     while ($countWhoSQLRow = mysqli_fetch_assoc($countWhoSQL_query)) {
+                        if ($countWhoSQLRow) {
+                            $countWhoForm = "SELECT COUNT(*) AS count FROM peertopeerform WHERE toFacultyID = '$facultyID' AND semester = '$distinctSemester' AND academic_year = '$distinctAcademicYear'";
+                            $countWhoForm_query = mysqli_query($con, $countWhoForm);
+                            $countWhoFormRow = mysqli_fetch_assoc($countWhoForm_query);
 
-                        $countWhoForm = "SELECT COUNT(*) AS count FROM peertopeerform WHERE toFacultyID = '$facultyID' AND semester = '$distinctSemester' AND academic_year = '$distinctAcademicYear'";
-                        $countWhoForm_query = mysqli_query($con, $countWhoForm);
-                        $countWhoFormRow = mysqli_fetch_assoc($countWhoForm_query);
+                            $countWhoFormRow = mysqli_fetch_assoc($countWhoForm_query);
+                            $countWhoSQLRow = mysqli_fetch_assoc($countWhoSQL_query);
 
-                        ?>
-                        <div>
-                            <h3>Number of faculty who evaluated you: <span
-                                    class="fw-bold"><?php echo $countWhoFormRow['count'] ?> /
-                                    <?php echo $countWhoSQLRow['count']; ?></span>
-                            </h3>
-                        </div>
-                        <?php
+                            if (isset($countWhoFormRow['count']) && isset($countWhoSQLRow['count'])) {
+                                echo "<span class='fw-bold'>{$countWhoFormRow['count']} / {$countWhoSQLRow['count']}</span>";
+                            } else {
+                                echo " <h3>Number of faculty who evaluated you: <span class='fw-bold'>0 / 0</span></h3>"; // Default value when data is not available
+                            }
+
+                        } else {
+                            echo "Error fetching data.";
+                            exit;
+                        }
                     }
                 }
+
+
+
                 $countYouSQL = "SELECT COUNT(*) AS count FROM randomfaculty WHERE faculty_Id = '$facultyID'";
                 $countYouSQL_query = mysqli_query($con, $countYouSQL);
 

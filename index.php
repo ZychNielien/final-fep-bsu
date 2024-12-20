@@ -142,7 +142,7 @@ if (isset($_SESSION['studentSRCode'])) {
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header bg-danger">
-            <h5 class="modal-title text-white" id="facultyRegistrationLabel">Student Registration Process</h5>
+            <h5 class="modal-title text-white" id="facultyRegistrationLabel">Faculty Registration Process</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <form id="myForm" method="POST" action="controller/facultyQuery.php" enctype="multipart/form-data">

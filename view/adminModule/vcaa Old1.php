@@ -196,24 +196,43 @@ ob_end_flush();
 
         <div class="tab-pane fade active show" id="nav-facultyDevelopment" role="tabpanel"
             aria-labelledby="nav-facultyDevelopment-tab">
-            <div class="d-flex justify-content-end">
-                <button class="btn btn-success" onclick="printPartOfPage('contentDiv')">Print</button>
-            </div>
+            <div class="container d-flex flex-column-reverse">
+                <table class="table table-striped table-bordered text-center align-middle w-100">
+                    <thead>
+                        <tr class="bg-danger">
+                            <th>Faculty</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $facultyDevelopment = "SELECT * FROM `instructor` WHERE status = 1";
+                        $facultyDevelopment_query = mysqli_query($con, $facultyDevelopment);
 
-            <?php
-            $FDP = "SELECT * FROM `academic_year_semester` WHERE id = 4";
-            $FDP_query = mysqli_query($con, $FDP);
-            $FDPRow = mysqli_fetch_assoc($FDP_query);
-            ?>
+                        if (mysqli_num_rows($facultyDevelopment_query) > 0) {
+                            while ($facultyDevelopmentRow = mysqli_fetch_assoc($facultyDevelopment_query)) {
+                                ?>
 
-            <h2 class="text-center">Faculty Development Plan for the Academic Year
-                <?php echo $FDPRow['academic_year'] ?>,
-                <?php echo $FDPRow['semester'] ?> Semester
-            </h2>
-            <div class="container d-flex flex-column-reverse" id="contentDiv">
+                                <tr>
+                                    <td><?php echo $facultyDevelopmentRow['first_name'] . ' ' . $facultyDevelopmentRow['last_name'] ?>
+                                    </td>
+                                    <td><button class="btn btn-success facultyDevelopment-btn" data-bs-toggle="modal"
+                                            data-bs-target="#facultyDevelopment"
+                                            data-id="<?php echo $facultyDevelopmentRow['faculty_Id']; ?>"
+                                            data-name="<?php echo $facultyDevelopmentRow['first_name'] . ' ' . $facultyDevelopmentRow['last_name'] ?>">Faculty
+                                            Development Report</button></td>
+                                </tr>
 
+                                <?php
+                            }
 
+                        } else {
+                            echo '<h3 class="text-center text-danger">No faculty found.</h3>';
+                        }
 
+                        ?>
+                    </tbody>
+                </table>
             </div>
 
         </div>
@@ -591,28 +610,6 @@ ob_end_flush();
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
 <script>
-    $(document).ready(function () {
-        // Function to get updated content every 5 seconds
-        function fetchContent() {
-            $.ajax({
-                url: 'getReport.php', // PHP file na magbibigay ng bagong content
-                type: 'GET',
-                success: function (response) {
-                    // Kapag may response, palitan ang content ng div
-                    $("#contentDiv").html(response);
-                },
-                error: function () {
-                    console.log("Error fetching data.");
-                }
-            });
-        }
-
-
-        setInterval(fetchContent, 1000);  // Mag-retrieve ng data bawat 5 segundo
-    });
-</script>
-
-<script>
     function fetchRatings() {
         const faculty_Id = $('#facultyIdField').val();
 
@@ -894,81 +891,4 @@ ob_end_flush();
     });
 
 
-</script>
-
-<script>
-    function printPartOfPage(elementId) {
-        var printContent = document.getElementById(elementId);
-        var windowUrl = 'about:blank';
-        var uniqueName = new Date();
-        var windowName = 'Print' + uniqueName.getTime();
-        var printWindow = window.open(windowUrl, windowName, 'width=1000,height=1000');
-        // th:last-child,
-        // td:last-child {
-        //     display: none !important;
-        // }
-        printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-            <head>
-                <title>Print</title>
-                <style>
-                .headerPrint {
-                    display: flex;
-                    justify-content: space-between;
-                }
-                    table {
-                        width:100% !important;
-                        border-collapse: collapse !important;
-                        text-align: center !important;
-                    }
-                    table tr {
-                        background-color: white !important;
-                        color: black !important;
-                    }
-                    th, td  {
-                        border: 1px solid black !important;
-                    }
-    th:last-child,
-        td:last-child {
-            display: none !important;
-        }
-                    .ulo {
-                        width: 100% !important;
-                        display: flex !important;
-                        justify-content:  space-evenly !important;
-                    }
-                    .ulo h5 {
-                        font-size: 18px !important;
-                        text-align: center !important;   
-                    }
-                </style>
-            </head>
-            <body>
-            <div class="headerPrint" style="margin-bottom: 10px;">
-                <div>
-                    <img src="../../public/picture/cics.png" style="width: 65px; height: 65px;">
-                </div>
-                <div>
-                    <h3 style="text-align: center;">Faculty Development Plan for the  </br> Academic Year
-                        <?php echo $FDPRow['academic_year'] ?>,
-                        <?php echo $FDPRow['semester'] ?> Semester
-                    </h3>
-                </div>
-                <div>
-                    <img src="../../public/picture/bsu.png" style="width: 70px; height: 70px;">
-                </div>
-            </div>
-
-                ${printContent.innerHTML}
-                                <h6 >Printed By : <?php echo $userRow['first_name'] . ' ' . $userRow['last_name'] ?></h6>
-            </body>
-        </html>
-    `);
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
-
-        printWindow.close();
-    }
 </script>

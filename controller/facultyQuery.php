@@ -65,7 +65,67 @@ if (isset($_POST['preferredSched'])) {
     exit();
 }
 
+if (isset($_POST['addFacultyAdmin'])) {
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $file_name = $_FILES['image']['name'];
+        $file_temp = $_FILES['image']['tmp_name'];
+        $file_size = $_FILES['image']['size'];
+        $file_ext = pathinfo($file_name, PATHINFO_EXTENSION);
+        $name = date("Ymd") . time();
+        $img_des = '../public/picture/facultyMembers/' . $name . "." . $file_ext;
 
+        $clearWhiteSpaces = array_map(function ($value) {
+            return preg_replace('/\s+/', '', $value);
+        }, $_POST);
+
+
+        $trimFirstName = isset($clearWhiteSpaces['first_name']) ? $clearWhiteSpaces['first_name'] : '';
+        $trimLastName = isset($clearWhiteSpaces['last_name']) ? $clearWhiteSpaces['last_name'] : '';
+
+        $gsuite = strtolower($trimFirstName . '.' . $trimLastName . '@g.batstate-u.edu.ph');
+        $firstname = trim($_POST['first_name']);
+        $lastname = trim($_POST['last_name']);
+        $password = strtoupper($trimLastName);
+        $usertype = trim('faculty');
+        $statusFs = 1;
+
+        if ($file_size > 2 * 1024 * 1024) {
+            $_SESSION['status'] = "File size exceeds 2MB limit.";
+            $_SESSION['status_code'] = "error";
+            header("Location: ../index.php");
+            exit();
+        }
+
+
+        if (move_uploaded_file($file_temp, $img_des)) {
+            $stmt = $con->prepare("INSERT INTO instructor (image, first_name, last_name, gsuite, password, usertype,status) VALUES (?, ?, ?, ?, ?, ?,?)");
+            if ($stmt) {
+
+                $stmt->bind_param("sssssss", $img_des, $firstname, $lastname, $gsuite, $password, $usertype, $statusFs);
+
+                if ($stmt->execute()) {
+                    $_SESSION['status'] = "Added Faculty Successfully";
+                    $_SESSION['status_code'] = "success";
+                } else {
+                    $_SESSION['status'] = "Something went wrong: " . $stmt->error;
+                    $_SESSION['status_code'] = "error";
+                }
+                $stmt->close();
+            } else {
+                $_SESSION['status'] = "Failed to prepare the SQL statement.";
+                $_SESSION['status_code'] = "error";
+            }
+        } else {
+            $_SESSION['status'] = "Failed to move uploaded file";
+            $_SESSION['status_code'] = "error";
+        }
+    } else {
+        $_SESSION['status'] = "Image upload is required.";
+        $_SESSION['status_code'] = "error";
+    }
+    header("Location: ../view/adminModule/maintenance.php");
+    exit();
+}
 
 
 

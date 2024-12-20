@@ -1,9 +1,9 @@
 <?php
-
-// NAVIGATION BAR
-include "components/navBar.php";
 // DATABASE CONNECTION
 include "../../model/dbconnection.php";
+// NAVIGATION BAR
+include "components/navBar.php";
+
 
 // Get the list of all instructors
 $usersql = "SELECT * FROM `instructor`  WHERE status = 1";
@@ -29,7 +29,7 @@ function getVerbalInterpretation($averageRating): string
     return $interpretations[(int) $averageRating];
 }
 
-$sqlSAYSelect = "SELECT * FROM academic_year_semester WHERE id =1";
+$sqlSAYSelect = "SELECT * FROM academic_year_semester WHERE id =4";
 $result = mysqli_query($con, $sqlSAYSelect);
 $selectSAY = mysqli_fetch_assoc($result);
 
@@ -37,13 +37,18 @@ $selectSAY = mysqli_fetch_assoc($result);
 $selectedSemester = $selectSAY['semester'];
 $selectedAcademicYear = $selectSAY['academic_year'];
 
-$sqlSAYSelectclass = "SELECT * FROM academic_year_semester WHERE id =2";
+$sqlSAYSelectclass = "SELECT * FROM academic_year_semester WHERE id =4";
 $resultclass = mysqli_query($con, $sqlSAYSelectclass);
 $selectSAYclass = mysqli_fetch_assoc($resultclass);
 
 
 $selectedSemesterclass = $selectSAYclass['semester'];
 $selectedAcademicYearclass = $selectSAYclass['academic_year'];
+
+$FDP = "SELECT * FROM `academic_year_semester` WHERE id = 4";
+$FDP_query = mysqli_query($con, $FDP);
+$FDPRow = mysqli_fetch_assoc($FDP_query);
+
 ?>
 
 <head>
@@ -92,7 +97,12 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                 <nav>
                     <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                        <button class="nav-link active" id="nav-teachingEffectiveness-tab" data-bs-toggle="tab"
+                        <button class="nav-link active" id="nav-OverallLahat-tab" data-bs-toggle="tab"
+                            data-bs-target="#nav-OverallLahat" type="button" role="tab" aria-controls="nav-OverallLahat"
+                            aria-selected="true">
+                            OVERALL</button>
+
+                        <button class="nav-link" id="nav-teachingEffectiveness-tab" data-bs-toggle="tab"
                             data-bs-target="#nav-teachingEffectiveness" type="button" role="tab"
                             aria-controls="nav-teachingEffectiveness" aria-selected="true">TEACHING
                             EFFECTIVENESS</button>
@@ -115,7 +125,166 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
                 </nav>
 
                 <div class="tab-content" id="nav-tabContent">
-                    <div class="tab-pane fade show active" id="nav-teachingEffectiveness" role="tabpanel"
+
+                    <div class="tab-pane fade show active" id="nav-OverallLahat" role="tabpanel"
+                        aria-labelledby="nav-OverallLahat-tab">
+                        <div class="d-flex justify-content-center my-2">
+                            <button class="btn btn-success" onclick="printPartOfPage('overallStudent')">Print</button>
+                        </div>
+                        <div class="container my-3 d-flex justify-content-center align-items-center flex-column"
+                            id="overallStudent">
+                            <h3 style="text-align: center;">Faculty Development Overall Ranking Academic Year
+                                <?php echo $FDPRow['academic_year'] ?>,
+                                <?php echo $FDPRow['semester'] ?> Semester
+                            </h3>
+
+                            <?php
+                            // Query to fetch all categories
+                            $categoriesQuery = "SELECT * FROM `studentscategories`";
+                            $categoriesResult = mysqli_query($con, $categoriesQuery);
+
+                            if (!$categoriesResult) {
+                                echo "Query failed for fetching categories: " . mysqli_error($con);
+                                exit;
+                            }
+
+                            $instructorData = [];
+                            $totalRatingSum = 0; // Initialize total rating sum
+                            $totalRatingCount = 0; // Initialize total rating count
+                            
+                            // Query to fetch all instructors (even those with no ratings)
+                            $instructorQuery = mysqli_query($con, "SELECT * FROM `instructor` WHERE status = 1");
+                            if (mysqli_num_rows($instructorQuery) > 0) {
+                                while ($instructorRow = mysqli_fetch_assoc($instructorQuery)) {
+                                    $facultyId = $instructorRow['faculty_Id'];
+                                    $facultyFullName = $instructorRow['first_name'] . ' ' . $instructorRow['last_name'];
+
+                                    // Initialize an array for this instructor's ratings
+                                    $instructorRatings = [
+                                        'facultyFullName' => $facultyFullName,
+                                        'facultyId' => $facultyId,
+                                        'totalRatingSum' => 0,
+                                        'totalRatingCount' => 0
+                                    ];
+
+                                    // Reset categories result set using mysqli_data_seek
+                                    mysqli_data_seek($categoriesResult, 0); // Make sure $categoriesResult is used after the query has been executed
+                            
+                                    while ($categoryRow = mysqli_fetch_assoc($categoriesResult)) {
+                                        $category = $categoryRow['categories'];
+
+                                        // Initialize variables for category rating calculations
+                                        $categoryRatingSum = 0;
+                                        $categoryRatingCount = 0;
+
+                                        // Get criteria for this category
+                                        $criteriaQuery = "SELECT * FROM `studentscriteria` WHERE studentsCategories = '$category'";
+                                        $criteriaResult = mysqli_query($con, $criteriaQuery);
+
+                                        if (mysqli_num_rows($criteriaResult) > 0) {
+                                            $facultyRatingsQuery = "
+                            SELECT * FROM `studentsform`
+                            WHERE toFacultyID = '$facultyId' 
+                            AND semester = '$selectedSemester' 
+                            AND academic_year = '$selectedAcademicYear'
+                        ";
+
+                                            $facultyRatingsResult = mysqli_query($con, $facultyRatingsQuery);
+
+                                            if (mysqli_num_rows($facultyRatingsResult) > 0) {
+                                                // Process ratings for this instructor
+                                                while ($ratingRow = mysqli_fetch_assoc($facultyRatingsResult)) {
+                                                    while ($criteriaRow = mysqli_fetch_assoc($criteriaResult)) {
+                                                        $columnName = sanitizeColumnName($criteriaRow['studentsCategories']);
+                                                        $finalColumnName = $columnName . $criteriaRow['id'];
+
+                                                        $rating = $ratingRow[$finalColumnName] ?? null;
+
+                                                        if ($rating !== null && $rating >= 1 && $rating <= 5) {
+                                                            $categoryRatingCount++;
+                                                            $categoryRatingSum += $rating;
+                                                        }
+                                                    }
+                                                    // Reset criteria result set
+                                                    mysqli_data_seek($criteriaResult, 0);
+                                                }
+
+                                                // Calculate category average if ratings exist
+                                                if ($categoryRatingCount > 0) {
+                                                    $categoryAverage = $categoryRatingSum / $categoryRatingCount;
+
+                                                    // Accumulate the instructor's total ratings and count
+                                                    $instructorRatings['totalRatingSum'] += $categoryRatingSum;
+                                                    $instructorRatings['totalRatingCount'] += $categoryRatingCount;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Calculate the average rating for the instructor (if there are ratings)
+                                    if ($instructorRatings['totalRatingCount'] > 0) {
+                                        $instructorRatings['averageRating'] = $instructorRatings['totalRatingSum'] / $instructorRatings['totalRatingCount'];
+                                    } else {
+                                        // If no ratings, set the average to 0
+                                        $instructorRatings['averageRating'] = 0;
+                                    }
+
+                                    // Determine the verbal interpretation based on the average rating
+                                    $ratingInterpretation = getVerbalInterpretation($instructorRatings['averageRating']);
+                                    $instructorRatings['ratingInterpretation'] = $ratingInterpretation;
+
+                                    // Add the aggregated data for this instructor to the instructorData array
+                                    $instructorData[] = $instructorRatings;
+                                }
+                            } else {
+                                echo "<tr><td colspan='4' style='text-align: center; color: red;'>No instructors found.</td></tr>";
+                            }
+
+                            // Sort the array by averageRating in descending order
+                            usort($instructorData, function ($a, $b) {
+                                return $b['averageRating'] <=> $a['averageRating'];  // Descending order
+                            });
+
+                            // Calculate the global average across all categories and instructors
+                            $globalAverage = 0;
+                            if ($totalRatingCount > 0) {
+                                $globalAverage = $totalRatingSum / $totalRatingCount;
+                            }
+                            ?>
+                            <!-- Render the instructor data table -->
+                            <table class="table table-bordered mt-2 text-center">
+                                <thead>
+                                    <tr class="bg-danger">
+                                        <th>Ranking</th>
+                                        <th>Faculty</th>
+                                        <th>Average</th>
+                                        <th>Verbal Interpretation</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    if (empty($instructorData)) {
+                                        echo "<tr><td colspan='4' style='text-align: center; color: red;'>No data to display.</td></tr>";
+                                    } else {
+                                        $ranking = 1;
+                                        foreach ($instructorData as $data) {
+                                            echo '<tr>';
+                                            echo '<td>' . $ranking . '</td>';  // Display the current rank
+                                            echo '<td>' . htmlspecialchars($data['facultyFullName']) . '</td>';
+                                            echo '<td>' . number_format((float) $data['averageRating'], 2, '.', '') . '</td>';
+                                            echo '<td>' . htmlspecialchars($data['ratingInterpretation']) . '</td>';
+                                            echo '</tr>';
+                                            $ranking++;  // Increment the ranking
+                                        }
+                                    }
+                                    ?>
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="nav-teachingEffectiveness" role="tabpanel"
                         aria-labelledby="nav-teachingEffectiveness-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
 
@@ -813,7 +982,11 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                 <nav>
                     <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                        <button class="nav-link active" id="nav-professionalism-tab" data-bs-toggle="tab"
+                        <button class="nav-link active" id="nav-OverallLahatPeer-tab" data-bs-toggle="tab"
+                            data-bs-target="#nav-OverallLahatPeer" type="button" role="tab"
+                            aria-controls="nav-OverallLahatPeer" aria-selected="true">
+                            OVERALL</button>
+                        <button class="nav-link " id="nav-professionalism-tab" data-bs-toggle="tab"
                             data-bs-target="#nav-professionalism" type="button" role="tab"
                             aria-controls="nav-professionalism" aria-selected="true">PROFESSIONALISM</button>
                         <button class="nav-link" id="nav-interpersonalBehavior-tab" data-bs-toggle="tab"
@@ -831,7 +1004,166 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                 <div class="tab-content" id="nav-tabContent">
 
-                    <div class="tab-pane fade show active" id="nav-professionalism" role="tabpanel"
+                    <div class="tab-pane fade show active" id="nav-OverallLahatPeer" role="tabpanel"
+                        aria-labelledby="nav-OverallLahatPeer-tab">
+                        <div class="d-flex justify-content-center my-2">
+                            <button class="btn btn-success" onclick="printPartOfPage('overallPeer')">Print</button>
+                        </div>
+                        <div class="container my-3 d-flex justify-content-center align-items-center flex-column"
+                            id="overallPeer">
+                            <h3 style="text-align: center;">Peer to Peer Overall Ranking Academic Year
+                                <?php echo $FDPRow['academic_year'] ?>,
+                                <?php echo $FDPRow['semester'] ?> Semester
+                            </h3>
+
+                            <?php
+                            // Query to fetch all categories
+                            $categoriesQuery = "SELECT * FROM `facultycategories`";
+                            $categoriesResult = mysqli_query($con, $categoriesQuery);
+
+                            if (!$categoriesResult) {
+                                echo "Query failed for fetching categories: " . mysqli_error($con);
+                                exit;
+                            }
+
+                            $instructorData = [];
+                            $totalRatingSum = 0; // Initialize total rating sum
+                            $totalRatingCount = 0; // Initialize total rating count
+                            
+                            // Query to fetch all instructors (even those with no ratings)
+                            $instructorQuery = mysqli_query($con, "SELECT * FROM `instructor` WHERE status = 1");
+                            if (mysqli_num_rows($instructorQuery) > 0) {
+                                while ($instructorRow = mysqli_fetch_assoc($instructorQuery)) {
+                                    $facultyId = $instructorRow['faculty_Id'];
+                                    $facultyFullName = $instructorRow['first_name'] . ' ' . $instructorRow['last_name'];
+
+                                    // Initialize an array for this instructor's ratings
+                                    $instructorRatings = [
+                                        'facultyFullName' => $facultyFullName,
+                                        'facultyId' => $facultyId,
+                                        'totalRatingSum' => 0,
+                                        'totalRatingCount' => 0
+                                    ];
+
+                                    // Reset categories result set using mysqli_data_seek
+                                    mysqli_data_seek($categoriesResult, 0); // Make sure $categoriesResult is used after the query has been executed
+                            
+                                    while ($categoryRow = mysqli_fetch_assoc($categoriesResult)) {
+                                        $category = $categoryRow['categories'];
+
+                                        // Initialize variables for category rating calculations
+                                        $categoryRatingSum = 0;
+                                        $categoryRatingCount = 0;
+
+                                        // Get criteria for this category
+                                        $criteriaQuery = "SELECT * FROM `facultycriteria` WHERE facultyCategories = '$category'";
+                                        $criteriaResult = mysqli_query($con, $criteriaQuery);
+
+                                        if (mysqli_num_rows($criteriaResult) > 0) {
+                                            $facultyRatingsQuery = "
+                            SELECT * FROM `peertopeerform`
+                            WHERE toFacultyID = '$facultyId' 
+                            AND semester = '$selectedSemester' 
+                            AND academic_year = '$selectedAcademicYear'
+                        ";
+
+                                            $facultyRatingsResult = mysqli_query($con, $facultyRatingsQuery);
+
+                                            if (mysqli_num_rows($facultyRatingsResult) > 0) {
+                                                // Process ratings for this instructor
+                                                while ($ratingRow = mysqli_fetch_assoc($facultyRatingsResult)) {
+                                                    while ($criteriaRow = mysqli_fetch_assoc($criteriaResult)) {
+                                                        $columnName = sanitizeColumnName($criteriaRow['facultyCategories']);
+                                                        $finalColumnName = $columnName . $criteriaRow['id'];
+
+                                                        $rating = $ratingRow[$finalColumnName] ?? null;
+
+                                                        if ($rating !== null && $rating >= 1 && $rating <= 5) {
+                                                            $categoryRatingCount++;
+                                                            $categoryRatingSum += $rating;
+                                                        }
+                                                    }
+                                                    // Reset criteria result set
+                                                    mysqli_data_seek($criteriaResult, 0);
+                                                }
+
+                                                // Calculate category average if ratings exist
+                                                if ($categoryRatingCount > 0) {
+                                                    $categoryAverage = $categoryRatingSum / $categoryRatingCount;
+
+                                                    // Accumulate the instructor's total ratings and count
+                                                    $instructorRatings['totalRatingSum'] += $categoryRatingSum;
+                                                    $instructorRatings['totalRatingCount'] += $categoryRatingCount;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Calculate the average rating for the instructor (if there are ratings)
+                                    if ($instructorRatings['totalRatingCount'] > 0) {
+                                        $instructorRatings['averageRating'] = $instructorRatings['totalRatingSum'] / $instructorRatings['totalRatingCount'];
+                                    } else {
+                                        // If no ratings, set the average to 0
+                                        $instructorRatings['averageRating'] = 0;
+                                    }
+
+                                    // Determine the verbal interpretation based on the average rating
+                                    $ratingInterpretation = getVerbalInterpretation($instructorRatings['averageRating']);
+                                    $instructorRatings['ratingInterpretation'] = $ratingInterpretation;
+
+                                    // Add the aggregated data for this instructor to the instructorData array
+                                    $instructorData[] = $instructorRatings;
+                                }
+                            } else {
+                                echo "<tr><td colspan='4' style='text-align: center; color: red;'>No instructors found.</td></tr>";
+                            }
+
+                            // Sort the array by averageRating in descending order
+                            usort($instructorData, function ($a, $b) {
+                                return $b['averageRating'] <=> $a['averageRating'];  // Descending order
+                            });
+
+                            // Calculate the global average across all categories and instructors
+                            $globalAverage = 0;
+                            if ($totalRatingCount > 0) {
+                                $globalAverage = $totalRatingSum / $totalRatingCount;
+                            }
+                            ?>
+                            <!-- Render the instructor data table -->
+                            <table class="table table-bordered mt-2 text-center">
+                                <thead>
+                                    <tr class="bg-danger">
+                                        <th>Ranking</th>
+                                        <th>Faculty</th>
+                                        <th>Average</th>
+                                        <th>Verbal Interpretation</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    if (empty($instructorData)) {
+                                        echo "<tr><td colspan='4' style='text-align: center; color: red;'>No data to display.</td></tr>";
+                                    } else {
+                                        $ranking = 1;
+                                        foreach ($instructorData as $data) {
+                                            echo '<tr>';
+                                            echo '<td>' . $ranking . '</td>';  // Display the current rank
+                                            echo '<td>' . htmlspecialchars($data['facultyFullName']) . '</td>';
+                                            echo '<td>' . number_format((float) $data['averageRating'], 2, '.', '') . '</td>';
+                                            echo '<td>' . htmlspecialchars($data['ratingInterpretation']) . '</td>';
+                                            echo '</tr>';
+                                            $ranking++;  // Increment the ranking
+                                        }
+                                    }
+                                    ?>
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </div>
+
+
+                    <div class="tab-pane fade " id="nav-professionalism" role="tabpanel"
                         aria-labelledby="nav-professionalism-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
                             <?php
@@ -1388,7 +1720,11 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                 <nav>
                     <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                        <button class="nav-link active" id="nav-contentOrganization-tab" data-bs-toggle="tab"
+                        <button class="nav-link active" id="nav-OverallLahatClass-tab" data-bs-toggle="tab"
+                            data-bs-target="#nav-OverallLahatClass" type="button" role="tab"
+                            aria-controls="nav-OverallLahatClass" aria-selected="true">
+                            OVERALL</button>
+                        <button class="nav-link" id="nav-contentOrganization-tab" data-bs-toggle="tab"
                             data-bs-target="#nav-contentOrganization" type="button" role="tab"
                             aria-controls="nav-contentOrganization" aria-selected="true">CONTENT ORGANIZATION</button>
                         <button class="nav-link" id="nav-presentation-tab" data-bs-toggle="tab"
@@ -1410,7 +1746,165 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
 
                 <div class="tab-content" id="nav-tabContent">
 
-                    <div class="tab-pane fade show active" id="nav-contentOrganization" role="tabpanel"
+                    <div class="tab-pane fade show active" id="nav-OverallLahatClass" role="tabpanel"
+                        aria-labelledby="nav-OverallLahatClass-tab">
+                        <div class="d-flex justify-content-center my-2">
+                            <button class="btn btn-success" onclick="printPartOfPage('overallClassroom')">Print</button>
+                        </div>
+                        <div class="container my-3 d-flex justify-content-center align-items-center flex-column"
+                            id="overallClassroom">
+                            <h3 style="text-align: center;">Classroom Observation Overall Ranking Academic Year
+                                <?php echo $FDPRow['academic_year'] ?>,
+                                <?php echo $FDPRow['semester'] ?> Semester
+                            </h3>
+
+                            <?php
+                            // Query to fetch all categories
+                            $categoriesQuery = "SELECT * FROM `classroomcategories`";
+                            $categoriesResult = mysqli_query($con, $categoriesQuery);
+
+                            if (!$categoriesResult) {
+                                echo "Query failed for fetching categories: " . mysqli_error($con);
+                                exit;
+                            }
+
+                            $instructorData = [];
+                            $totalRatingSum = 0; // Initialize total rating sum
+                            $totalRatingCount = 0; // Initialize total rating count
+                            
+                            // Query to fetch all instructors (even those with no ratings)
+                            $instructorQuery = mysqli_query($con, "SELECT * FROM `instructor` WHERE status = 1");
+                            if (mysqli_num_rows($instructorQuery) > 0) {
+                                while ($instructorRow = mysqli_fetch_assoc($instructorQuery)) {
+                                    $facultyId = $instructorRow['faculty_Id'];
+                                    $facultyFullName = $instructorRow['first_name'] . ' ' . $instructorRow['last_name'];
+
+                                    // Initialize an array for this instructor's ratings
+                                    $instructorRatings = [
+                                        'facultyFullName' => $facultyFullName,
+                                        'facultyId' => $facultyId,
+                                        'totalRatingSum' => 0,
+                                        'totalRatingCount' => 0
+                                    ];
+
+                                    // Reset categories result set using mysqli_data_seek
+                                    mysqli_data_seek($categoriesResult, 0); // Make sure $categoriesResult is used after the query has been executed
+                            
+                                    while ($categoryRow = mysqli_fetch_assoc($categoriesResult)) {
+                                        $category = $categoryRow['categories'];
+
+                                        // Initialize variables for category rating calculations
+                                        $categoryRatingSum = 0;
+                                        $categoryRatingCount = 0;
+
+                                        // Get criteria for this category
+                                        $criteriaQuery = "SELECT * FROM `classroomcriteria` WHERE classroomCategories = '$category'";
+                                        $criteriaResult = mysqli_query($con, $criteriaQuery);
+
+                                        if (mysqli_num_rows($criteriaResult) > 0) {
+                                            $facultyRatingsQuery = "
+                            SELECT * FROM `classroomobservation`
+                            WHERE toFacultyID = '$facultyId' 
+                            AND semester = '$selectedSemester' 
+                            AND academic_year = '$selectedAcademicYear'
+                        ";
+
+                                            $facultyRatingsResult = mysqli_query($con, $facultyRatingsQuery);
+
+                                            if (mysqli_num_rows($facultyRatingsResult) > 0) {
+                                                // Process ratings for this instructor
+                                                while ($ratingRow = mysqli_fetch_assoc($facultyRatingsResult)) {
+                                                    while ($criteriaRow = mysqli_fetch_assoc($criteriaResult)) {
+                                                        $columnName = sanitizeColumnName($criteriaRow['classroomCategories']);
+                                                        $finalColumnName = $columnName . $criteriaRow['id'];
+
+                                                        $rating = $ratingRow[$finalColumnName] ?? null;
+
+                                                        if ($rating !== null && $rating >= 1 && $rating <= 5) {
+                                                            $categoryRatingCount++;
+                                                            $categoryRatingSum += $rating;
+                                                        }
+                                                    }
+                                                    // Reset criteria result set
+                                                    mysqli_data_seek($criteriaResult, 0);
+                                                }
+
+                                                // Calculate category average if ratings exist
+                                                if ($categoryRatingCount > 0) {
+                                                    $categoryAverage = $categoryRatingSum / $categoryRatingCount;
+
+                                                    // Accumulate the instructor's total ratings and count
+                                                    $instructorRatings['totalRatingSum'] += $categoryRatingSum;
+                                                    $instructorRatings['totalRatingCount'] += $categoryRatingCount;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Calculate the average rating for the instructor (if there are ratings)
+                                    if ($instructorRatings['totalRatingCount'] > 0) {
+                                        $instructorRatings['averageRating'] = $instructorRatings['totalRatingSum'] / $instructorRatings['totalRatingCount'];
+                                    } else {
+                                        // If no ratings, set the average to 0
+                                        $instructorRatings['averageRating'] = 0;
+                                    }
+
+                                    // Determine the verbal interpretation based on the average rating
+                                    $ratingInterpretation = getVerbalInterpretation($instructorRatings['averageRating']);
+                                    $instructorRatings['ratingInterpretation'] = $ratingInterpretation;
+
+                                    // Add the aggregated data for this instructor to the instructorData array
+                                    $instructorData[] = $instructorRatings;
+                                }
+                            } else {
+                                echo "<tr><td colspan='4' style='text-align: center; color: red;'>No instructors found.</td></tr>";
+                            }
+
+                            // Sort the array by averageRating in descending order
+                            usort($instructorData, function ($a, $b) {
+                                return $b['averageRating'] <=> $a['averageRating'];  // Descending order
+                            });
+
+                            // Calculate the global average across all categories and instructors
+                            $globalAverage = 0;
+                            if ($totalRatingCount > 0) {
+                                $globalAverage = $totalRatingSum / $totalRatingCount;
+                            }
+                            ?>
+                            <!-- Render the instructor data table -->
+                            <table class="table table-bordered mt-2 text-center">
+                                <thead>
+                                    <tr class="bg-danger">
+                                        <th>Ranking</th>
+                                        <th>Faculty</th>
+                                        <th>Average</th>
+                                        <th>Verbal Interpretation</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    if (empty($instructorData)) {
+                                        echo "<tr><td colspan='4' style='text-align: center; color: red;'>No data to display.</td></tr>";
+                                    } else {
+                                        $ranking = 1;
+                                        foreach ($instructorData as $data) {
+                                            echo '<tr>';
+                                            echo '<td>' . $ranking . '</td>';  // Display the current rank
+                                            echo '<td>' . htmlspecialchars($data['facultyFullName']) . '</td>';
+                                            echo '<td>' . number_format((float) $data['averageRating'], 2, '.', '') . '</td>';
+                                            echo '<td>' . htmlspecialchars($data['ratingInterpretation']) . '</td>';
+                                            echo '</tr>';
+                                            $ranking++;  // Increment the ranking
+                                        }
+                                    }
+                                    ?>
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade " id="nav-contentOrganization" role="tabpanel"
                         aria-labelledby="nav-contentOrganization-tab">
                         <div class="container my-3 d-flex justify-content-center align-items-center ">
                             <?php
@@ -2102,3 +2596,71 @@ $selectedAcademicYearclass = $selectSAYclass['academic_year'];
     </script>
     <?php unset($_SESSION['success']); ?>
 <?php endif; ?>
+
+<script>
+    function printPartOfPage(elementId) {
+        var printContent = document.getElementById(elementId);
+        var windowUrl = 'about:blank';
+        var uniqueName = new Date();
+        var windowName = 'Print' + uniqueName.getTime();
+        var printWindow = window.open(windowUrl, windowName, 'width=1000,height=1000');
+        // th:last-child,
+        // td:last-child {
+        //     display: none !important;
+        // }
+        printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Print</title>
+                <style>
+                .headerPrint {
+                    display: flex;
+                    justify-content: space-evenly;
+                }
+                    table {
+                        width:100% !important;
+                        border-collapse: collapse !important;
+                        text-align: center !important;
+                    }
+                    table tr {
+                        background-color: white !important;
+                        color: black !important;
+                    }
+                    th, td  {
+                        border: 1px solid black !important;
+                        padding: 5px;
+                    }
+                    .ulo {
+                        width: 100% !important;
+                        display: flex !important;
+                        justify-content:  space-evenly !important;
+                    }
+                    .ulo h5 {
+                        font-size: 18px !important;
+                        text-align: center !important;   
+                    }
+                </style>
+            </head>
+            <body>
+            <div class="headerPrint" style="margin-bottom: 10px;">
+                <div>
+                    <img src="../../public/picture/cics.png" style="width: 65px; height: 65px;">
+                </div>
+                <div>
+                    <img src="../../public/picture/bsu.png" style="width: 70px; height: 70px;">
+                </div>
+            </div>
+
+                ${printContent.innerHTML}
+                          
+            </body>
+        </html>
+    `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+
+        printWindow.close();
+    }
+</script>
